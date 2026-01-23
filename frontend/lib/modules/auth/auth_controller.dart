@@ -1,6 +1,8 @@
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/material.dart'; // Added
+import 'package:dio/dio.dart'; // Added
 import '../../core/api/api_client.dart';
 import '../../app/routes/app_routes.dart';
 import '../../core/utils/platform_utils.dart';
@@ -20,6 +22,15 @@ class AuthController extends GetxController {
   final Rx<String?> role = Rx<String?>(null);
 
   var _hasCheckedSession = false;
+
+  @override
+  void onInit() {
+    super.onInit();
+    // Check session on controller initialization (only once)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      checkSessionAndRedirect();
+    });
+  }
 
   /// Check if session exists and redirect accordingly
   void checkSessionAndRedirect() {
@@ -117,7 +128,32 @@ class AuthController extends GetxController {
     } catch (e, stack) {
       print('[AUTH] Process session error: $e');
       print('[AUTH] Stack trace: $stack');
-      Get.snackbar('Error', 'Terjadi kesalahan: $e');
+
+      // Provide specific error messages for common issues
+      String errorMsg = 'Terjadi kesalahan saat login';
+      if (e is DioException) {
+        if (e.type == DioExceptionType.connectionTimeout ||
+            e.type == DioExceptionType.receiveTimeout ||
+            e.type == DioExceptionType.sendTimeout) {
+          errorMsg =
+              'Koneksi terlalu lambat. Pastikan internet stabil dan coba lagi.';
+        } else if (e.type == DioExceptionType.connectionError) {
+          errorMsg =
+              'Tidak dapat terhubung ke server. Periksa koneksi internet Anda.';
+        } else if (e.response?.statusCode == 500) {
+          errorMsg =
+              'Server sedang mengalami gangguan. Silakan coba lagi nanti.';
+        }
+      }
+
+      Get.snackbar(
+        'Error',
+        errorMsg,
+        duration: const Duration(seconds: 5),
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade100,
+        colorText: Colors.red.shade900,
+      );
     } finally {
       isLoading.value = false;
     }

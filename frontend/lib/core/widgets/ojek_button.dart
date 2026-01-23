@@ -19,6 +19,11 @@ class OjekButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Common shape
+    final shape = RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    );
+
     if (isSecondary) {
       return SizedBox(
         height: 48,
@@ -26,9 +31,7 @@ class OjekButton extends StatelessWidget {
           onPressed: isLoading ? null : onPressed,
           style: OutlinedButton.styleFrom(
             side: const BorderSide(color: AppColors.borderLight),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            shape: shape,
             // Padding handled by height constraint
             padding: const EdgeInsets.symmetric(horizontal: 16),
           ),
@@ -42,10 +45,10 @@ class OjekButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          shape: shape,
           padding: const EdgeInsets.symmetric(horizontal: 16),
+          elevation: 0, // Flat design preference
+          backgroundColor: AppColors.primaryGreen,
         ),
         child: _buildContent(color: Colors.white),
       ),

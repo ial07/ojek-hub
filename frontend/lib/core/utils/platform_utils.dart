@@ -8,8 +8,9 @@ class PlatformUtils {
       // Web uses localhost redirect
       return 'http://localhost:8080';
     } else {
-      // Mobile (Android/iOS) uses deep link scheme
-      return 'ojekhub://login-callback';
+      // Mobile (Android/iOS) uses deep link scheme with reverse domain notation
+      // CRITICAL: Must match AndroidManifest.xml scheme exactly
+      return 'io.supabase.ojekhub://login-callback/';
     }
   }
 

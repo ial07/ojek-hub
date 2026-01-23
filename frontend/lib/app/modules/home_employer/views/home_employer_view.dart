@@ -139,7 +139,7 @@ class HomeEmployerView extends GetView<HomeEmployerController> {
                       'Dibuat: ${order.createdAt?.toIso8601String().split('T')[0] ?? '-'}',
                       style: const TextStyle(
                         fontSize: 12,
-                        color: AppColors.textPlaceholder,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ],
@@ -179,7 +179,8 @@ class HomeEmployerView extends GetView<HomeEmployerController> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _buildStat('Butuh', '${order.totalWorkers} Org'),
-                _buildStat('Tipe', (order.workerType ?? 'Umum').toUpperCase()),
+                _buildStat(
+                    'Tipe', (order.workerType ?? 'Umum').capitalizeFirst!),
                 _buildStat('Pelamar', '${order.currentQueue ?? 0}'),
               ],
             ),

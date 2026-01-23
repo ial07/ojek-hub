@@ -9,8 +9,11 @@ class ApiClient extends GetxService {
   Future<ApiClient> init() async {
     _dio = Dio(BaseOptions(
       baseUrl: Env.baseApiUrl,
-      connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 10),
+      connectTimeout:
+          const Duration(seconds: 30), // Increased for production serverless
+      receiveTimeout:
+          const Duration(seconds: 30), // Increased for production serverless
+      sendTimeout: const Duration(seconds: 30), // Added for upload operations
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',

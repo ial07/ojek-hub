@@ -4,15 +4,15 @@ class Env {
   // Replace with your local machine's IP for Android Emulator (10.0.2.2 usually)
   // or your computer's IP if testing on real device
   static String get baseApiUrl {
-    // If running on Android Emulator, use 10.0.2.2 to access host machine
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:3000/api';
-    }
-    // For iOS Simulator and Web, localhost is fine
-    return 'http://localhost:3000/api';
+    // // If running on Android Emulator, use 10.0.2.2 to access host machine
+    // if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+    //   return 'http://10.0.2.2:3000/api';
+    // }
+    // // For iOS Simulator and Web, localhost is fine
+    // return 'http://localhost:3000/api';
 
-    // Switch to this for production:
-    // return 'https://ojek-hub.vercel.app/api';
+    // // Switch to this for production:
+    return 'https://ojek-hub.vercel.app/api';
   }
 
   // Web Client ID from Firebase (client_type: 3 in google-services.json)

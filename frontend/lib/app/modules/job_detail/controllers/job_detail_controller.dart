@@ -103,7 +103,7 @@ class JobDetailController extends GetxController {
 
     final phone = job.employerPhone!;
     final url =
-        'https://wa.me/$phone?text=Halo,%20saya%20tertarik%20dengan%20lowongan%20${Uri.encodeComponent(job.title ?? "pekerjaan")}';
+        'https://wa.me/$phone?text=Halo,%20saya%20tertarik%20dengan%20${Uri.encodeComponent(job.title ?? "pekerjaan")}';
 
     try {
       final uri = Uri.parse(url);

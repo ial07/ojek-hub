@@ -31,7 +31,7 @@ class AppColors {
 
 class AppDimensions {
   static const double radiusCard = 24.0;
-  static const double radiusButton = 30.0;
+  static const double radiusButton = 12.0;
   static const double radiusInput = 16.0;
 
   static const double paddingS = 8.0;

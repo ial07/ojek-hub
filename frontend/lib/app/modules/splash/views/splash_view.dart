@@ -24,10 +24,13 @@ class SplashView extends GetView<SplashController> {
                 color: AppColors.pastelGreen, // Brand background
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.agriculture,
-                size: 64,
-                color: AppColors.textPrimary, // Black icon
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  height: 64,
+                  width: 64,
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
             const SizedBox(height: 24),
