@@ -10,6 +10,9 @@ class OrderModel {
   String? workerType;
   DateTime? jobDate;
   DateTime? createdAt;
+  double? latitude;
+  double? longitude;
+  String? mapUrl;
 
   OrderModel({
     this.id,
@@ -22,6 +25,9 @@ class OrderModel {
     this.workerType,
     this.jobDate,
     this.createdAt,
+    this.latitude,
+    this.longitude,
+    this.mapUrl,
   });
 
   OrderModel.fromJson(Map<String, dynamic> json) {
@@ -46,6 +52,10 @@ class OrderModel {
     if (json['created_at'] != null) {
       createdAt = DateTime.tryParse(json['created_at']);
     }
+    // Parse location fields
+    latitude = (json['latitude'] as num?)?.toDouble();
+    longitude = (json['longitude'] as num?)?.toDouble();
+    mapUrl = json['map_url'];
   }
 
   Map<String, dynamic> toJson() {
@@ -60,6 +70,9 @@ class OrderModel {
     data['worker_type'] = workerType;
     data['job_date'] = jobDate?.toIso8601String();
     data['created_at'] = createdAt?.toIso8601String();
+    data['latitude'] = latitude;
+    data['longitude'] = longitude;
+    data['map_url'] = mapUrl;
     return data;
   }
 }

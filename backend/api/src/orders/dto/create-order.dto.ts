@@ -5,6 +5,8 @@ import {
   IsDateString,
   Min,
   IsNotEmpty,
+  IsOptional,
+  IsNumber,
 } from "class-validator";
 import { Type } from "class-transformer";
 
@@ -30,4 +32,16 @@ export class CreateOrderDto {
   @IsDateString()
   @IsNotEmpty()
   jobDate: string;
+
+  @IsOptional()
+  @IsNumber()
+  latitude?: number;
+
+  @IsOptional()
+  @IsNumber()
+  longitude?: number;
+
+  @IsOptional()
+  @IsString()
+  mapUrl?: string;
 }
