@@ -1,0 +1,80 @@
+import 'package:get/get.dart';
+import 'package:ojekhub_mobile/modules/auth/auth_binding.dart';
+import 'package:ojekhub_mobile/modules/auth/auth_page.dart';
+import 'package:ojekhub_mobile/app/modules/create_job/bindings/create_job_binding.dart';
+import 'package:ojekhub_mobile/app/modules/create_job/views/create_job_view.dart';
+import 'package:ojekhub_mobile/app/modules/home_employer/bindings/home_employer_binding.dart';
+import 'package:ojekhub_mobile/app/modules/home_employer/views/home_employer_view.dart';
+import 'package:ojekhub_mobile/app/modules/home_worker/bindings/home_worker_binding.dart';
+import 'package:ojekhub_mobile/app/modules/home_worker/views/home_worker_view.dart';
+import 'package:ojekhub_mobile/app/modules/landing/bindings/landing_binding.dart';
+import 'package:ojekhub_mobile/app/modules/landing/views/landing_view.dart';
+import 'package:ojekhub_mobile/app/modules/main/bindings/main_binding.dart';
+import 'package:ojekhub_mobile/app/modules/main/views/main_view.dart';
+import 'package:ojekhub_mobile/app/modules/onboarding/bindings/onboarding_binding.dart';
+import 'package:ojekhub_mobile/app/modules/onboarding/views/profile_setup_view.dart';
+import 'package:ojekhub_mobile/app/modules/onboarding/views/role_selection_view.dart';
+import 'package:ojekhub_mobile/app/modules/queue/bindings/queue_binding.dart';
+import 'package:ojekhub_mobile/app/modules/queue/views/queue_view.dart';
+import 'package:ojekhub_mobile/app/modules/splash/bindings/splash_binding.dart';
+import 'package:ojekhub_mobile/app/modules/splash/views/splash_view.dart';
+import 'app_routes.dart';
+
+class AppPages {
+  AppPages._();
+
+  static const INITIAL = Routes.SPLASH;
+
+  static final routes = [
+    GetPage(
+      name: Routes.SPLASH,
+      page: () => const SplashView(),
+      binding: SplashBinding(),
+    ),
+    GetPage(
+      name: Routes.LANDING,
+      page: () => const LandingView(),
+      binding: LandingBinding(),
+    ),
+    GetPage(
+      name: Routes.LOGIN,
+      page: () => const AuthPage(),
+      binding: AuthBinding(),
+    ),
+    GetPage(
+      name: Routes.ROLE_SELECTION,
+      page: () => const RoleSelectionView(),
+      binding: OnboardingBinding(),
+    ),
+    GetPage(
+      name: Routes.PROFILE_SETUP,
+      page: () => const ProfileSetupView(),
+      binding: OnboardingBinding(),
+    ),
+    GetPage(
+      name: Routes.HOME_EMPLOYER,
+      page: () => const HomeEmployerView(),
+      binding: HomeEmployerBinding(),
+    ),
+    GetPage(
+      name: Routes.HOME_WORKER,
+      page: () => const HomeWorkerView(),
+      binding: HomeWorkerBinding(),
+    ),
+    GetPage(
+      name: Routes.CREATE_JOB,
+      page: () => const CreateJobView(),
+      binding: CreateJobBinding(),
+    ),
+    GetPage(
+      name: Routes.MAIN,
+      page: () => const MainView(),
+      binding: MainBinding(),
+    ),
+    GetPage(
+      name: Routes.QUEUE_VIEW,
+      page: () => const QueueView(),
+      binding: QueueBinding(),
+    ),
+  ];
+}

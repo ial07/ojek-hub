@@ -1,0 +1,86 @@
+import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import '../../core/api/api_client.dart';
+
+class QueueController extends GetxController {
+  final ApiClient _apiClient = Get.find<ApiClient>();
+  final box = GetStorage();
+
+  String orderId = '';
+  var queueList = <dynamic>[].obs;
+  var isLoading = true.obs;
+  var joinLoading = false.obs;
+
+  // Computed properties
+  String get userId => box.read('user')?['id'] ?? '';
+  String get userRole => box.read('user')?['role'] ?? '';
+  bool get isWorker => userRole == 'worker';
+
+  int get myPosition {
+    final index = queueList.indexWhere(
+        (item) => (item['worker_id'] ?? item['worker']?['id']) == userId);
+    return index != -1 ? index + 1 : 0;
+  }
+
+  bool get isJoined => myPosition > 0;
+
+  @override
+  void onInit() {
+    super.onInit();
+    orderId = Get.arguments ?? '';
+    if (orderId.isNotEmpty) {
+      fetchQueue();
+    }
+  }
+
+  Future<void> fetchQueue() async {
+    try {
+      isLoading.value = true;
+      final response = await _apiClient.dio.get('/orders/$orderId/queue');
+      if (response.statusCode == 200) {
+        queueList.value = response.data['data'];
+      }
+    } catch (e) {
+      print('Fetch Queue Error: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> joinQueue() async {
+    if (isJoined) return;
+
+    try {
+      joinLoading.value = true;
+      // Backend: POST /orders/:id/queue
+      final response = await _apiClient.dio.post('/orders/$orderId/queue');
+
+      if (response.statusCode == 201) {
+        Get.snackbar('Sukses', 'Anda berhasil mengambil order ini!');
+        fetchQueue();
+      }
+      Get.snackbar('Gagal', 'Gagal mengambil order. Mungkin sudah penuh.');
+    } finally {
+      joinLoading.value = false;
+    }
+  }
+
+  Future<void> acceptApplicant(String workerId) async {
+    try {
+      isLoading.value = true;
+      final response = await _apiClient.dio.post(
+        '/orders/$orderId/applications/$workerId/accept',
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        Get.snackbar('Sukses', 'Pelamar berhasil diterima');
+        fetchQueue(); // Refresh list
+      }
+    } catch (e) {
+      Get.snackbar('Gagal', 'Gagal menerima pelamar');
+      print('Accept Error: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+}

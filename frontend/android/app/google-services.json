@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "30356335361",
+    "project_id": "ojek-hub",
+    "storage_bucket": "ojek-hub.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:30356335361:android:fa37b037da2b668f85c900",
+        "android_client_info": {
+          "package_name": "com.example.ojekhub_mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "30356335361-oge408ovba2c0ihsdhoupfder2f9bvnu.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.ojekhub_mobile",
+            "certificate_hash": "ed96aec1ec095a13af3a8627e9a7b4be33af3bfd"
+          }
+        },
+        {
+          "client_id": "30356335361-jcjkf4ejgfs78lig46kqikirf50m9g90.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDMwHF7WBYF5Vkj59T3a1dVLcjb4kPd8Lg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "30356335361-jcjkf4ejgfs78lig46kqikirf50m9g90.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

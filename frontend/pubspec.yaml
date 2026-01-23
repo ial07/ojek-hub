@@ -1,0 +1,30 @@
+name: ojekhub_mobile
+description: Aplikasi penghubung petani dan tenaga kerja di Rejang Lebong.
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.2.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  get: ^4.6.6
+
+  # Backend & Auth (Supabase only)
+  supabase_flutter: ^2.3.0
+  dio: ^5.3.2
+  get_storage: ^2.1.1
+
+  # Design & UI
+  google_fonts: ^7.1.0
+  flutter_svg: ^2.0.9
+  intl: ^0.20.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
