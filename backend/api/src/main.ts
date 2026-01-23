@@ -41,9 +41,19 @@ async function bootstrap(): Promise<INestApplication> {
 
 // Vercel Serverless Handler Export
 module.exports = async function handler(req: any, res: any) {
-  const app = await bootstrap();
-  const expressInstance = app.getHttpAdapter().getInstance();
-  return expressInstance(req, res);
+  try {
+    const app = await bootstrap();
+    const expressInstance = app.getHttpAdapter().getInstance();
+    return expressInstance(req, res);
+  } catch (error: any) {
+    console.error("[VERCEL HANDLER ERROR]", error);
+    // Return error details for debugging (remove in production)
+    res.status(500).json({
+      error: "Function initialization failed",
+      message: error.message || String(error),
+      stack: process.env.NODE_ENV !== "production" ? error.stack : undefined,
+    });
+  }
 };
 
 // Local development only
