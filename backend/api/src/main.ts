@@ -1,8 +1,8 @@
-import { NestFactory, HttpAdapterHost } from "@nestjs/core";
+import { NestFactory } from "@nestjs/core";
 import { ValidationPipe, INestApplication } from "@nestjs/common";
 import { AppModule } from "./app.module";
 import { ExpressAdapter } from "@nestjs/platform-express";
-import express from "express";
+import * as express from "express";
 
 // Cached app instance for serverless warm starts
 let cachedApp: INestApplication | null = null;
@@ -41,11 +41,11 @@ async function bootstrap(): Promise<INestApplication> {
 }
 
 // Vercel Serverless Handler Export
-export default async function handler(req: any, res: any) {
+module.exports = async function handler(req: any, res: any) {
   const app = await bootstrap();
   const expressInstance = app.getHttpAdapter().getInstance();
   return expressInstance(req, res);
-}
+};
 
 // Local development only
 if (process.env.NODE_ENV !== "production") {
