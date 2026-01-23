@@ -10,7 +10,7 @@ import {
 import { AuthGuard } from "@nestjs/passport";
 import { QueueService } from "./queue.service";
 
-@Controller("orders/:orderId/queue")
+@Controller("api/orders/:orderId/queue")
 @UseGuards(AuthGuard("jwt"))
 export class QueueController {
   constructor(private readonly queueService: QueueService) {}
