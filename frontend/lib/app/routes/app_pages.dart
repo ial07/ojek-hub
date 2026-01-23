@@ -18,6 +18,8 @@ import 'package:ojekhub_mobile/app/modules/queue/bindings/queue_binding.dart';
 import 'package:ojekhub_mobile/app/modules/queue/views/queue_view.dart';
 import 'package:ojekhub_mobile/app/modules/splash/bindings/splash_binding.dart';
 import 'package:ojekhub_mobile/app/modules/splash/views/splash_view.dart';
+import 'package:ojekhub_mobile/app/modules/job_detail/bindings/job_detail_binding.dart';
+import 'package:ojekhub_mobile/app/modules/job_detail/views/job_detail_view.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -75,6 +77,11 @@ class AppPages {
       name: Routes.QUEUE_VIEW,
       page: () => const QueueView(),
       binding: QueueBinding(),
+    ),
+    GetPage(
+      name: Routes.JOB_DETAIL,
+      page: () => const JobDetailView(),
+      binding: JobDetailBinding(),
     ),
   ];
 }

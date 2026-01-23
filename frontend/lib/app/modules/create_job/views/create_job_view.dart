@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/ojek_button.dart';
 import '../../../../core/widgets/ojek_header.dart';
 import '../../../../core/widgets/ojek_input.dart';
+import 'package:latlong2/latlong.dart';
+import '../../../../core/widgets/location_picker_view.dart';
 import '../controllers/create_job_controller.dart';
 
 class CreateJobView extends GetView<CreateJobController> {
@@ -90,6 +91,57 @@ class CreateJobView extends GetView<CreateJobController> {
                       suffixIcon: const Icon(Icons.location_on_outlined,
                           color: AppColors.textPlaceholder),
                     ),
+
+                    const SizedBox(height: 12),
+                    Obx(() {
+                      final hasLocation =
+                          controller.selectedLocation.value != null;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          OutlinedButton.icon(
+                            icon: Icon(
+                                hasLocation ? Icons.check_circle : Icons.map),
+                            label: Text(hasLocation
+                                ? 'Titik Terpilih (Ketuk untuk ubah)'
+                                : 'Pilih Titik Peta (Wajib)'),
+                            onPressed: () async {
+                              final result = await Get.to(() =>
+                                  LocationPickerView(
+                                      initialLocation:
+                                          controller.selectedLocation.value));
+                              if (result != null && result is LatLng) {
+                                controller.setLocation(result);
+                              }
+                            },
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: hasLocation
+                                  ? AppColors.primaryGreen
+                                  : AppColors.textSecondary,
+                              side: BorderSide(
+                                  color: hasLocation
+                                      ? AppColors.primaryGreen
+                                      : AppColors.borderLight),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16)),
+                            ),
+                          ),
+                          if (hasLocation)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 4, left: 4),
+                              child: Text(
+                                'Google Maps Link: ${controller.mapUrl.value ?? ""}',
+                                style: const TextStyle(
+                                    fontSize: 10,
+                                    color: AppColors.textSecondary),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            )
+                        ],
+                      );
+                    }),
 
                     const SizedBox(height: 24),
 

@@ -1,11 +1,13 @@
 import 'package:get/get.dart';
 import '../../../../core/api/api_client.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class QueueController extends GetxController {
   final ApiClient _apiClient = Get.find<ApiClient>();
-  
+
   String orderId = '';
-  var queueList = <dynamic>[].obs; // Using dynamic or QueueModel with extra user data
+  var queueList =
+      <dynamic>[].obs; // Using dynamic or QueueModel with extra user data
   var isLoading = true.obs;
 
   @override
@@ -44,10 +46,16 @@ class QueueController extends GetxController {
   }
 
   Future<void> openWhatsApp(String phone) async {
-    // Open WhatsApp URL
-    // Get.snackbar('Info', 'Open WA: $phone');
-    // In real app: launchUrl(Uri.parse('https://wa.me/$phone'));
-    // Doing a placeholder print
-    print("Open WA: $phone");
+    if (phone.isEmpty) return;
+
+    final url = 'https://wa.me/$phone';
+    try {
+      final uri = Uri.parse(url);
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        Get.snackbar('Error', 'Tidak dapat membuka WhatsApp');
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Gagal membuka WhatsApp');
+    }
   }
 }

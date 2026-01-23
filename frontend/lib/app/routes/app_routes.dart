@@ -14,4 +14,5 @@ abstract class Routes {
   static const CREATE_JOB = '/orders/create';
   static const ORDERS = '/orders';
   static const QUEUE_VIEW = '/queue';
+  static const JOB_DETAIL = '/orders/detail';
 }

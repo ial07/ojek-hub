@@ -9,6 +9,9 @@ class OrdersController extends GetxController {
   var orders = <OrderModel>[].obs;
   var isLoading = true.obs;
 
+  final box = GetStorage();
+  String get userRole => box.read('user')?['role'] ?? '';
+
   @override
   void onInit() {
     super.onInit();

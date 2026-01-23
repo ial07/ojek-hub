@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../models/order_model.dart';
 import 'package:get/get.dart';
 import '../../routes.dart';
 import 'orders_controller.dart';
@@ -12,10 +11,12 @@ class OrderListPage extends GetView<OrdersController> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Daftar Lowongan')),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => Get.toNamed(Routes.createOrder),
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: controller.userRole == 'worker'
+          ? null
+          : FloatingActionButton(
+              onPressed: () => Get.toNamed(Routes.createOrder),
+              child: const Icon(Icons.add),
+            ),
       body: Obx(() {
         if (controller.isLoading.value) {
           return const Center(child: CircularProgressIndicator());

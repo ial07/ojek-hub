@@ -20,6 +20,8 @@ import 'app/modules/create_job/bindings/create_job_binding.dart';
 import 'app/modules/create_job/views/create_job_view.dart';
 import 'app/modules/main/bindings/main_binding.dart';
 import 'app/modules/main/views/main_view.dart';
+import 'app/modules/job_detail/views/job_detail_view.dart';
+import 'app/modules/job_detail/bindings/job_detail_binding.dart';
 
 class Routes {
   static const login = '/login';
@@ -29,6 +31,7 @@ class Routes {
   static const createOrder = '/orders/create';
   static const profile = '/profile';
   static const queue = '/queue';
+  static const jobDetail = '/orders/detail';
 
   static const homeById = '/home'; // Logic to decide?
   static const homeEmployer = '/home/employer';
@@ -41,6 +44,7 @@ class Routes {
   static const ORDERS = orders;
   static const CREATE_JOB = createOrder;
   static const QUEUE_VIEW = queue;
+  static const JOB_DETAIL = jobDetail;
   static const PROFILE_SETUP =
       '/profile/setup'; // Assuming this was what was meant? Or generic profile.
   static const PROFILE = profile;
@@ -107,6 +111,11 @@ class AppPages {
       name: Routes.MAIN,
       page: () => const MainView(),
       binding: MainBinding(),
+    ),
+    GetPage(
+      name: Routes.jobDetail,
+      page: () => const JobDetailView(),
+      binding: JobDetailBinding(),
     ),
   ];
 }

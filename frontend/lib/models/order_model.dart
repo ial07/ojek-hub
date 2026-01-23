@@ -13,6 +13,8 @@ class OrderModel {
   double? latitude;
   double? longitude;
   String? mapUrl;
+  String? employerPhone;
+  String? employerName; // Might be useful too
 
   OrderModel({
     this.id,
@@ -28,6 +30,8 @@ class OrderModel {
     this.latitude,
     this.longitude,
     this.mapUrl,
+    this.employerPhone,
+    this.employerName,
   });
 
   OrderModel.fromJson(Map<String, dynamic> json) {
@@ -56,6 +60,11 @@ class OrderModel {
     latitude = (json['latitude'] as num?)?.toDouble();
     longitude = (json['longitude'] as num?)?.toDouble();
     mapUrl = json['map_url'];
+
+    if (json['employer'] != null) {
+      employerPhone = json['employer']['phone'];
+      employerName = json['employer']['name'];
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -73,6 +82,8 @@ class OrderModel {
     data['latitude'] = latitude;
     data['longitude'] = longitude;
     data['map_url'] = mapUrl;
+    // We generally don't send employer info back to server this way, but for completeness or caching:
+    // data['employer_phone'] = employerPhone;
     return data;
   }
 }

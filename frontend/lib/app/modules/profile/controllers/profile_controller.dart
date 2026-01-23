@@ -23,8 +23,8 @@ class ProfileController extends GetxController {
     final user = _authController.user.value;
     if (user != null) {
       nameController.text = user['name'] ?? '';
-      phoneController.text = user['phone'] ?? '';
-      addressController.text = user['address'] ?? '';
+      phoneController.text = user['phone'] ?? user['phone_number'] ?? '';
+      addressController.text = user['location'] ?? '';
     }
   }
 
@@ -45,9 +45,8 @@ class ProfileController extends GetxController {
 
       final updates = {
         'name': nameController.text,
-        'phone': phoneController.text,
-        'address': addressController.text,
-        'updated_at': DateTime.now().toIso8601String(),
+        'phone': _normalizePhone(phoneController.text),
+        'location': addressController.text,
       };
 
       await _supabase.from('users').update(updates).eq('id', userId);
@@ -62,6 +61,17 @@ class ProfileController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  String _normalizePhone(String phone) {
+    String p = phone.replaceAll(RegExp(r'\D'), ''); // Remove non-digits
+    if (p.startsWith('0')) {
+      return '62${p.substring(1)}';
+    }
+    if (p.startsWith('8')) {
+      return '62$p';
+    }
+    return p;
   }
 
   Future<void> logout() async {

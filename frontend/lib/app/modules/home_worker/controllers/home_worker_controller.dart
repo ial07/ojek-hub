@@ -1,5 +1,7 @@
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:dio/dio.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/api/api_client.dart';
@@ -106,7 +108,54 @@ class HomeWorkerController extends GetxController {
     await fetchJobs();
   }
 
-  Future<void> applyToJob(String orderId) async {
+  Future<void> openMap(String url) async {
+    final uri = Uri.parse(url);
+    try {
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        Get.snackbar('Error', 'Tidak dapat membuka peta');
+      }
+    } catch (e) {
+      print('Launch error: $e');
+      Get.snackbar('Error', 'Gagal membuka aplikasi peta');
+    }
+  }
+
+  void confirmApply(OrderModel job) {
+    if (job.id == null) return;
+
+    Get.defaultDialog(
+      title: 'Konfirmasi Lamaran',
+      titleStyle: const TextStyle(
+          fontFamily: 'Plus Jakarta Sans', fontWeight: FontWeight.bold),
+      content: Column(
+        children: [
+          const Text(
+            'Apakah anda yakin ingin melamar pekerjaan ini?',
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          if (job.mapUrl != null)
+            TextButton.icon(
+              icon: const Icon(Icons.map,
+                  size: 16, color: AppColors.primaryGreen),
+              label: const Text('Lihat Lokasi di Peta',
+                  style: TextStyle(color: AppColors.primaryGreen)),
+              onPressed: () => openMap(job.mapUrl!),
+            ),
+        ],
+      ),
+      textConfirm: 'Ya, Lamar',
+      textCancel: 'Batal',
+      confirmTextColor: Colors.white,
+      buttonColor: AppColors.primaryBlack,
+      onConfirm: () {
+        Get.back(); // Close dialog
+        _submitApplication(job.id!);
+      },
+    );
+  }
+
+  Future<void> _submitApplication(String orderId) async {
     if (!isReady.value) {
       print('[HOME_WORKER] Not ready, blocking apply');
       return;

@@ -29,11 +29,11 @@ class AuthPage extends GetView<AuthController> {
               Container(
                 padding: const EdgeInsets.all(32),
                 decoration: const BoxDecoration(
-                  color: AppColors.scaffoldBackground,
+                  color: AppColors.pastelGreen,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.agriculture,
-                    size: 80, color: AppColors.textPrimary),
+                    size: 100, color: AppColors.primaryGreen),
               ),
               const SizedBox(height: 32),
 
@@ -71,7 +71,7 @@ class AuthPage extends GetView<AuthController> {
                     ),
                   )),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 32),
               const Text(
                 'Versi 1.0.0',
                 style:

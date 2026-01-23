@@ -46,6 +46,9 @@ export class OrdersService {
         location: dto.location,
         job_date: dto.jobDate,
         status: "open",
+        latitude: dto.latitude,
+        longitude: dto.longitude,
+        map_url: dto.mapUrl,
       })
       .select()
       .single();
@@ -65,7 +68,7 @@ export class OrdersService {
     // Public endpoint: Fetch all OPEN orders
     const { data, error } = await this.supabase
       .from("orders")
-      .select("*, employer:users(name, location)") // Using Supabase join if FK setup/inferred
+      .select("*, employer:users(name, location, phone)") // Using Supabase join if FK setup/inferred
       .eq("status", "open")
       .order("created_at", { ascending: false });
 
@@ -116,10 +119,21 @@ export class OrdersService {
   }
 
   async updateOrder(userId: string, orderId: string, dto: UpdateOrderDto) {
-    // RLS will block if not owner, but good to explicit check or handle RLS error
+    // Construct payload mapping camelCase DTO to snake_case DB columns
+    const payload = {
+      ...(dto.status && { status: dto.status }),
+      ...(dto.workerCount && { worker_count: dto.workerCount }),
+      ...(dto.description && { description: dto.description }),
+      ...(dto.location && { location: dto.location }),
+      ...(dto.jobDate && { job_date: dto.jobDate }),
+      ...(dto.latitude && { latitude: dto.latitude }),
+      ...(dto.longitude && { longitude: dto.longitude }),
+      ...(dto.mapUrl && { map_url: dto.mapUrl }),
+    };
+
     const { data, error } = await this.supabase
       .from("orders")
-      .update(dto)
+      .update(payload)
       .eq("id", orderId)
       .eq("employer_id", userId) // Security check
       .select()

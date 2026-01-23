@@ -1,12 +1,18 @@
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
+import '../../../../models/order_model.dart';
 import '../../core/api/api_client.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class QueueController extends GetxController {
   final ApiClient _apiClient = Get.find<ApiClient>();
   final box = GetStorage();
 
   String orderId = '';
+  // Added to store order details for header
+  final Rx<OrderModel?> order = Rx<OrderModel?>(null);
   var queueList = <dynamic>[].obs;
   var isLoading = true.obs;
   var joinLoading = false.obs;
@@ -27,9 +33,28 @@ class QueueController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    orderId = Get.arguments ?? '';
+    final args = Get.arguments;
+    if (args is OrderModel) {
+      order.value = args;
+      orderId = args.id ?? '';
+    } else if (args is String) {
+      orderId = args;
+      fetchOrderDetails();
+    }
+
     if (orderId.isNotEmpty) {
       fetchQueue();
+    }
+  }
+
+  Future<void> fetchOrderDetails() async {
+    try {
+      final response = await _apiClient.dio.get('/orders/$orderId');
+      if (response.statusCode == 200) {
+        order.value = OrderModel.fromJson(response.data['data']);
+      }
+    } catch (e) {
+      print('Fetch Order Error: $e');
     }
   }
 
@@ -81,6 +106,20 @@ class QueueController extends GetxController {
       print('Accept Error: $e');
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  Future<void> openWhatsApp(String phone) async {
+    if (phone.isEmpty) return;
+
+    final url = 'https://wa.me/$phone';
+    try {
+      final uri = Uri.parse(url);
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        Get.snackbar('Error', 'Tidak dapat membuka WhatsApp');
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Gagal membuka WhatsApp');
     }
   }
 }

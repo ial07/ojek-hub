@@ -146,10 +146,11 @@ class HomeEmployerView extends GetView<HomeEmployerController> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: isOpen ? AppColors.pastelGreen : AppColors.pastelRed,
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   isOpen ? 'BUKA' : 'TUTUP',
@@ -158,14 +159,14 @@ class HomeEmployerView extends GetView<HomeEmployerController> {
                         ? AppColors.pastelGreenText
                         : AppColors.pastelRedText,
                     fontWeight: FontWeight.bold,
-                    fontSize: 10,
+                    fontSize: 11,
                   ),
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
 
           // Stats Row
           Container(
@@ -194,7 +195,7 @@ class HomeEmployerView extends GetView<HomeEmployerController> {
               isSecondary: true,
               icon: Icons.people_outline,
               onPressed: () {
-                Get.toNamed(Routes.QUEUE_VIEW, arguments: order.id);
+                Get.toNamed(Routes.QUEUE_VIEW, arguments: order);
               },
             ),
           ),

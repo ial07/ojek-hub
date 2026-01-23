@@ -8,6 +8,7 @@ import '../controllers/home_worker_controller.dart';
 import '../../../services/auth_service.dart';
 import '../../../../models/order_model.dart';
 import 'package:intl/intl.dart';
+import '../../../routes/app_routes.dart';
 
 class HomeWorkerView extends GetView<HomeWorkerController> {
   const HomeWorkerView({super.key});
@@ -83,6 +84,7 @@ class HomeWorkerView extends GetView<HomeWorkerController> {
     }
 
     return OjekCard(
+      onTap: () => Get.toNamed(Routes.JOB_DETAIL, arguments: job),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -130,6 +132,23 @@ class HomeWorkerView extends GetView<HomeWorkerController> {
               ),
               const SizedBox(width: 12),
               _buildMetadataItem(Icons.calendar_today_outlined, dateStr),
+              if (job.mapUrl != null) ...[
+                const SizedBox(width: 12),
+                InkWell(
+                  onTap: () => controller.openMap(job.mapUrl!),
+                  child: Row(
+                    children: const [
+                      Icon(Icons.map, size: 14, color: AppColors.primaryGreen),
+                      SizedBox(width: 4),
+                      Text("Peta",
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.primaryGreen,
+                              fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                )
+              ]
             ],
           ),
 
@@ -192,7 +211,7 @@ class HomeWorkerView extends GetView<HomeWorkerController> {
                         !isApplied &&
                         controller.isReady.value &&
                         !controller.isLoading.value)
-                    ? () => controller.applyToJob(job.id!)
+                    ? () => controller.confirmApply(job)
                     : null,
                 isLoading: controller.isLoading.value && !isApplied,
                 // Optional: Change style if applied (OjekButton might need check)

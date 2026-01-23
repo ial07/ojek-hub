@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../../core/api/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
 
@@ -22,6 +23,16 @@ class CreateJobController extends GetxController {
   final TextEditingController dateController = TextEditingController();
 
   DateTime? selectedDate;
+  var selectedLocation = Rxn<LatLng>();
+  var mapUrl = RxnString();
+
+  void setLocation(LatLng loc) {
+    selectedLocation.value = loc;
+    mapUrl.value =
+        'https://www.google.com/maps?q=${loc.latitude},${loc.longitude}';
+    print('[CREATE_JOB] Location selected: ${loc.latitude}, ${loc.longitude}');
+    print('[CREATE_JOB] Map URL: ${mapUrl.value}');
+  }
 
   @override
   void onInit() {
@@ -103,6 +114,13 @@ class CreateJobController extends GetxController {
       return;
     }
 
+    // Guard: map location required
+    if (selectedLocation.value == null) {
+      print('[CREATE_JOB] No map location selected');
+      Get.snackbar('Error', 'Pilih titik lokasi di peta');
+      return;
+    }
+
     try {
       isLoading.value = true;
       print('[CREATE_JOB] Submitting order...');
@@ -111,9 +129,12 @@ class CreateJobController extends GetxController {
         'workerType': workerType.value,
         'workerCount': workerCount.value,
         'description': descriptionController.text,
-        'location': locationController.text,
+        'location': locationController.text, // Text address
         'jobDate':
             selectedDate?.toIso8601String() ?? DateTime.now().toIso8601String(),
+        'latitude': selectedLocation.value!.latitude,
+        'longitude': selectedLocation.value!.longitude,
+        'mapUrl': mapUrl.value,
       });
 
       if (response.statusCode == 200 || response.statusCode == 201) {

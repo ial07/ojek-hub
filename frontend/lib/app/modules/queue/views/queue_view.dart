@@ -23,20 +23,26 @@ class QueueView extends GetView<QueueController> {
           itemBuilder: (context, index) {
             final item = controller.queueList[index];
             final worker = item['worker'] ?? {};
-            final joinedAt = item['joined_at'];
-            
+            final joinedAt = item['created_at'];
+            final status = item['status'] ?? 'pending';
+
             return ListTile(
               leading: CircleAvatar(
-                backgroundColor: Colors.green,
+                backgroundColor:
+                    status == 'accepted' ? Colors.green : Colors.grey,
                 child: Text('${index + 1}'),
               ),
               title: Text(worker['name'] ?? 'Nama Tidak Ada'),
-              subtitle: Text('${worker['location'] ?? ''}\nGabung: ${joinedAt.toString().split('T')[1].split('.')[0]}'),
+              subtitle: Text(
+                  'Status: $status\nTanggal: ${joinedAt != null ? joinedAt.toString().split('T')[0] : "-"}'),
               isThreeLine: true,
-              trailing: IconButton(
-                icon: const Icon(Icons.chat, color: Colors.green),
-                onPressed: () => controller.openWhatsApp(worker['phone'] ?? ''),
-              ),
+              trailing: (worker['phone'] != null &&
+                      worker['phone'].toString().isNotEmpty)
+                  ? IconButton(
+                      icon: const Icon(Icons.chat, color: Colors.green),
+                      onPressed: () => controller.openWhatsApp(worker['phone']),
+                    )
+                  : null,
             );
           },
         );
