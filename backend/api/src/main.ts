@@ -31,7 +31,6 @@ async function bootstrap(): Promise<INestApplication> {
   });
 
   app.useGlobalPipes(new ValidationPipe({ whitelist: true }));
-  app.setGlobalPrefix("api");
 
   // Initialize the app (required for serverless)
   await app.init();
@@ -52,6 +51,6 @@ if (process.env.NODE_ENV !== "production") {
   bootstrap().then(async (app) => {
     const port = process.env.PORT || 3000;
     await app.listen(port);
-    console.log(`Application is running on: http://localhost:${port}/api`);
+    console.log(`Application is running on: http://localhost:${port}`);
   });
 }

@@ -2,7 +2,7 @@ import { Controller, Get } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { createClient } from "@supabase/supabase-js";
 
-@Controller()
+@Controller("api")
 export class AppController {
   constructor(private configService: ConfigService) {}
 
