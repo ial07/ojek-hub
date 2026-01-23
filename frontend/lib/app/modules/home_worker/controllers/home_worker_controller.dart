@@ -64,12 +64,10 @@ class HomeWorkerController extends GetxController {
           .select('order_id')
           .eq('worker_id', userId);
 
-      if (response != null) {
-        final List<dynamic> data = response;
-        appliedJobIds.value = data.map((e) => e['order_id'] as String).toSet();
-        print(
-            '[HOME_WORKER] Fetched ${appliedJobIds.length} existing applications');
-      }
+      final List<dynamic> data = response;
+      final appliedIds = data.map((e) => e['order_id'] as String).toSet();
+      appliedJobIds.value = appliedIds;
+      print('[HOME_WORKER] Fetched ${appliedIds.length} existing applications');
     } catch (e) {
       print('[HOME_WORKER] Failed to fetch applied jobs: $e');
     }

@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'controllers/activity_controller.dart';
+import '../controllers/activity_controller.dart';
 
 class ActivityBinding extends Bindings {
   @override
