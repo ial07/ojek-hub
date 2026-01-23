@@ -2,7 +2,9 @@ import { NestFactory } from "@nestjs/core";
 import { ValidationPipe, INestApplication } from "@nestjs/common";
 import { AppModule } from "./app.module";
 import { ExpressAdapter } from "@nestjs/platform-express";
-import * as express from "express";
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const express = require("express");
 
 // Cached app instance for serverless warm starts
 let cachedApp: INestApplication | null = null;
