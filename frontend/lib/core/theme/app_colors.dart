@@ -4,7 +4,10 @@ class AppColors {
   // Primary Actions
   static const Color primaryBlack = Color(0xFF111827); // Almost purely black
   static const Color primaryWhite = Color(0xFFFFFFFF);
-  static const Color primaryGreen = Color(0xFF16A34A); // Standard Green 600
+  static const Color primaryGreen =
+      Color(0xFF2E7D32); // KerjoCurup Forest Green
+  static const Color secondary = Color(0xFFF9A825); // KerjoCurup Warm Amber
+  static const Color transparent = Colors.transparent;
 
   // Backgrounds
   static const Color scaffoldBackground = Color(0xFFF9FAFB); // Very light grey

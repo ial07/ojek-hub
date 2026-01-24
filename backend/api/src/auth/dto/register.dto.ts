@@ -40,4 +40,8 @@ export class RegisterDto {
   @IsString()
   @IsOptional()
   supabaseUserId?: string;
+
+  @IsString()
+  @IsOptional()
+  photoUrl?: string;
 }

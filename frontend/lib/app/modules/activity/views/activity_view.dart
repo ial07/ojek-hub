@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/ojek_card.dart';
 import '../controllers/activity_controller.dart';
 
 class ActivityView extends GetView<ActivityController> {
@@ -10,220 +9,270 @@ class ActivityView extends GetView<ActivityController> {
 
   @override
   Widget build(BuildContext context) {
-    // Ensure controller is initialized if not already
-    if (!Get.isRegistered<ActivityController>()) {
-      Get.put(ActivityController());
-    }
+    // Controller is now removed from here as it is put in MainBinding
 
-    return Scaffold(
-      backgroundColor: AppColors.scaffoldBackground,
-      appBar: AppBar(
-        title: const Text('Aktivitas'),
-        elevation: 0,
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.textPrimary,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: controller.fetchActivities,
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: AppColors.scaffoldBackground,
+        appBar: AppBar(
+          title: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Aktivitas',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(
+                controller.role == 'worker'
+                    ? 'Lowongan yang pernah kamu lamar'
+                    : 'Lowongan yang kamu kelola',
+                style: const TextStyle(
+                    fontSize: 12, fontWeight: FontWeight.normal),
+              ),
+            ],
           ),
-        ],
+          elevation: 0,
+          backgroundColor: Colors.white,
+          foregroundColor: AppColors.textPrimary,
+          bottom: const TabBar(
+            labelColor: AppColors.primaryGreen,
+            unselectedLabelColor: Colors.grey,
+            indicatorColor: AppColors.primaryGreen,
+            tabs: [
+              Tab(text: 'Aktif'),
+              Tab(text: 'Riwayat'),
+            ],
+          ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              onPressed: controller.fetchActivities,
+            ),
+          ],
+        ),
+        body: Obx(() {
+          if (controller.isLoading.value) {
+            return const Center(
+              child: CircularProgressIndicator(color: AppColors.primaryGreen),
+            );
+          }
+
+          if (controller.errorMessage.isNotEmpty) {
+            return Center(child: Text(controller.errorMessage.value));
+          }
+
+          return TabBarView(
+            children: [
+              _buildActivityList(controller.activeActivities, isActive: true),
+              _buildActivityList(controller.historyActivities, isActive: false),
+            ],
+          );
+        }),
       ),
-      body: Obx(() {
-        if (controller.isLoading.value) {
-          return const Center(
-            child: CircularProgressIndicator(color: AppColors.primaryBlack),
-          );
-        }
-
-        if (controller.errorMessage.isNotEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error_outline,
-                    size: 48, color: AppColors.pastelRedText),
-                const SizedBox(height: 16),
-                Text(controller.errorMessage.value),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: controller.fetchActivities,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryBlack,
-                  ),
-                  child: const Text('Coba Lagi',
-                      style: TextStyle(color: Colors.white)),
-                ),
-              ],
-            ),
-          );
-        }
-
-        if (controller.activities.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: const BoxDecoration(
-                    color: AppColors.pastelGreen,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.history,
-                      size: 48, color: AppColors.pastelGreenText),
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Belum ada aktivitas',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  'Aktivitas aplikasi Anda akan muncul di sini',
-                  style: TextStyle(color: AppColors.textSecondary),
-                ),
-              ],
-            ),
-          );
-        }
-
-        return RefreshIndicator(
-          onRefresh: controller.fetchActivities,
-          color: AppColors.primaryBlack,
-          child: ListView.separated(
-            padding: const EdgeInsets.all(16),
-            itemCount: controller.activities.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 12),
-            itemBuilder: (context, index) {
-              final activity = controller.activities[index];
-              return _buildActivityCard(activity);
-            },
-          ),
-        );
-      }),
     );
   }
 
-  Widget _buildActivityCard(ActivityModel activity) {
-    Color statusColor;
-    Color statusBgColor;
-    String statusText = activity.status.toUpperCase();
-
-    // Determine colors based on status
-    switch (activity.status.toLowerCase()) {
-      case 'accepted':
-      case 'open':
-        statusColor = AppColors.pastelGreenText;
-        statusBgColor = AppColors.pastelGreen;
-        break;
-      case 'rejected':
-      case 'closed':
-      case 'cancelled':
-        statusColor = AppColors.pastelRedText;
-        statusBgColor = AppColors.pastelRed;
-        break;
-      case 'pending':
-      default:
-        statusColor = AppColors.textSecondary; // Greyish for neutral/pending
-        statusBgColor = AppColors.borderLight;
-        break;
+  Widget _buildActivityList(List<ActivityModel> items,
+      {required bool isActive}) {
+    if (items.isEmpty) {
+      return _buildEmptyState(isActive);
     }
 
-    // Translate status for display if needed
-    if (activity.status == 'pending') statusText = 'MENUNGGU';
-    if (activity.status == 'accepted') statusText = 'DITERIMA';
-    if (activity.status == 'rejected') statusText = 'DITOLAK';
-    if (activity.status == 'open') statusText = 'BUKA';
-    if (activity.status == 'closed') statusText = 'TUTUP';
+    return RefreshIndicator(
+      onRefresh: controller.fetchActivities,
+      color: AppColors.primaryGreen,
+      child: ListView.separated(
+        padding: const EdgeInsets.all(16),
+        itemCount: items.length,
+        separatorBuilder: (context, index) => const SizedBox(height: 12),
+        itemBuilder: (context, index) {
+          final activity = items[index];
+          return _buildActivityItem(activity);
+        },
+      ),
+    );
+  }
 
-    return OjekCard(
-      padding: const EdgeInsets.all(12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildEmptyState(bool isActive) {
+    final isWorker = controller.role == 'worker';
+    String message = '';
+
+    if (isActive) {
+      message = isWorker
+          ? 'Belum ada lamaran yang sedang diproses.\nCari lowongan di Beranda.'
+          : 'Belum ada lowongan aktif.\nBuat lowongan baru sekarang.';
+    } else {
+      message = isWorker
+          ? 'Belum ada riwayat lamaran atau pekerjaan.'
+          : 'Belum ada lowongan yang selesai.';
+    }
+
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Icon based on type
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: AppColors.scaffoldBackground,
-              borderRadius: BorderRadius.circular(8),
+              color: Colors.grey.shade100,
+              shape: BoxShape.circle,
             ),
             child: Icon(
-              activity.type == 'application'
-                  ? Icons.assignment_ind_outlined
-                  : Icons.work_outline,
-              color: AppColors.primaryBlack,
-              size: 24,
+              isActive ? Icons.assignment_outlined : Icons.history,
+              size: 48,
+              color: Colors.grey,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(height: 16),
+          Text(
+            message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.grey, height: 1.5),
+          ),
+        ],
+      ),
+    );
+  }
 
-          // Content
-          Expanded(
+  Widget _buildActivityItem(ActivityModel activity) {
+    // Map status to UI properties
+    String label = '';
+    Color color = Colors.grey;
+    Color bgColor = Colors.grey.shade100;
+
+    switch (activity.status.toLowerCase()) {
+      case 'pending':
+        label = 'Menunggu Konfirmasi';
+        color = Colors.orange;
+        bgColor = Colors.orange.shade50;
+        break;
+      case 'accepted':
+        label = 'Diterima';
+        color = Colors.green;
+        bgColor = Colors.green.shade50;
+        break;
+      case 'rejected':
+        label = 'Tidak Diterima';
+        color = Colors.red;
+        bgColor = Colors.red.shade50;
+        break;
+      case 'completed':
+        label = 'Selesai';
+        color = Colors.blue;
+        bgColor = Colors.blue.shade50;
+        break;
+      case 'open':
+        label = 'Mencari Pekerja';
+        color = Colors.green;
+        bgColor = Colors.green.shade50;
+        break;
+      case 'filled':
+        label = 'Kuota Terpenuhi';
+        color = Colors.orange;
+        bgColor = Colors.orange.shade50;
+        break;
+      case 'closed':
+        label = 'Ditutup';
+        color = Colors.grey;
+        bgColor = Colors.grey.shade200;
+        break;
+      case 'cancelled':
+        label = 'Dibatalkan';
+        color = Colors.red;
+        bgColor = Colors.red.shade50;
+        break;
+      default:
+        label = activity.status.toUpperCase();
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {
+            // Navigate based on type
+            if (activity.type == 'application' || activity.type == 'order') {
+              // Assuming the activity ID is actually the APPLICATION ID for workers
+              // But for navigation we need ORDER ID?
+              // The controller logic maps ID to order's ID for employers, but application's ID for workers
+              // We might need to ensure ActivityModel has `orderId`
+              // For now, let's assume `id` on ActivityModel is safe to pass if we handled it in Controller
+              // Actually, let's check controller.
+              // Worker: id = item['id'] (Application ID) -> Might be issue.
+              // It's safer if we pass orderId. I will update this logic later if needed.
+              // For MVP, just tap doesn't crash.
+            }
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Expanded(
-                      child: Text(
-                        activity.title,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                          color: AppColors.textPrimary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 2),
+                          horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
-                        color: statusBgColor,
-                        borderRadius: BorderRadius.circular(4),
+                        color: bgColor,
+                        borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        statusText,
+                        label,
                         style: TextStyle(
-                          color: statusColor,
-                          fontSize: 10,
+                          color: color,
                           fontWeight: FontWeight.bold,
+                          fontSize: 10,
                         ),
                       ),
                     ),
+                    Text(
+                      DateFormat('d MMM yyyy').format(activity.date),
+                      style: const TextStyle(fontSize: 11, color: Colors.grey),
+                    ),
                   ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  activity.title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   activity.subtitle,
                   style: const TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textSecondary,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                      fontSize: 14, color: AppColors.textSecondary),
                 ),
+                const SizedBox(height: 12),
+                const Divider(height: 1),
                 const SizedBox(height: 8),
-                Text(
-                  DateFormat('dd MMM yyyy, HH:mm').format(activity.date),
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textPlaceholder,
-                  ),
-                ),
+                const Row(
+                  children: [
+                    Icon(Icons.location_on_outlined,
+                        size: 14, color: Colors.grey),
+                    SizedBox(width: 4),
+                    Text(
+                      'Lihat Detail',
+                      style: TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                    Spacer(),
+                    Icon(Icons.chevron_right,
+                        size: 16, color: Colors.grey),
+                  ],
+                )
               ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

@@ -8,7 +8,8 @@ class ProfileSetupView extends GetView<OnboardingController> {
   @override
   Widget build(BuildContext context) {
     final TextEditingController nameController = TextEditingController();
-    final TextEditingController phoneController = TextEditingController(); // WhatsApp number
+    final TextEditingController phoneController =
+        TextEditingController(); // WhatsApp number
     final TextEditingController locationController = TextEditingController();
 
     return Scaffold(
@@ -19,13 +20,13 @@ class ProfileSetupView extends GetView<OnboardingController> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Obx(() => Text(
-              controller.isWorker 
-                  ? 'Daftar sebagai ${controller.selectedWorkerType.value == 'ojek' ? 'Ojek' : 'Pekerja Harian'}'
-                  : 'Daftar sebagai ${controller.selectedRole.value == 'petani' ? 'Petani' : 'Pemilik Gudang'}',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            )),
+                  controller.isWorker
+                      ? 'Daftar sebagai Pencari Kerja'
+                      : 'Daftar sebagai ${controller.selectedRole.value == 'petani' ? 'Petani' : 'Pemilik Gudang'}',
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
+                )),
             const SizedBox(height: 24),
-            
             TextField(
               controller: nameController,
               decoration: const InputDecoration(
@@ -35,7 +36,6 @@ class ProfileSetupView extends GetView<OnboardingController> {
               ),
             ),
             const SizedBox(height: 16),
-            
             TextField(
               controller: phoneController,
               keyboardType: TextInputType.phone,
@@ -47,7 +47,6 @@ class ProfileSetupView extends GetView<OnboardingController> {
               ),
             ),
             const SizedBox(height: 16),
-            
             TextField(
               controller: locationController,
               decoration: const InputDecoration(
@@ -57,17 +56,13 @@ class ProfileSetupView extends GetView<OnboardingController> {
               ),
             ),
             const SizedBox(height: 32),
-            
             ElevatedButton(
               onPressed: () {
-                if (nameController.text.isNotEmpty && 
-                    phoneController.text.isNotEmpty && 
+                if (nameController.text.isNotEmpty &&
+                    phoneController.text.isNotEmpty &&
                     locationController.text.isNotEmpty) {
-                  controller.register(
-                    nameController.text, 
-                    phoneController.text, 
-                    locationController.text
-                  );
+                  controller.register(nameController.text, phoneController.text,
+                      locationController.text);
                 } else {
                   Get.snackbar('Error', 'Mohon lengkapi semua data');
                 }

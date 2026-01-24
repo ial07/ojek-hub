@@ -18,9 +18,7 @@ class MainView extends GetView<MainController> {
           index: controller.currentIndex.value,
           children: [
             // Tab 0: Home
-            controller.isWorker
-                ? const HomeWorkerView()
-                : const HomeEmployerView(),
+            controller.isWorker ? const HomeWorkerView() : const HomeEmployerView(),
 
             // Tab 1: Activity/Jobs (Placeholder for now as requested default tabs)
             // Using a Scaffold to maintain styling consistency

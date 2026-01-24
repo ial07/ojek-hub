@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/onboarding_controller.dart';
 import '../../../../routes.dart';
+import '../../../../core/theme/app_colors.dart';
 
 class RoleSelectionView extends GetView<OnboardingController> {
   const RoleSelectionView({super.key});
@@ -9,127 +10,276 @@ class RoleSelectionView extends GetView<OnboardingController> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Pilih Peran')),
-      body: Padding(
+      backgroundColor: AppColors.scaffoldBackground,
+      appBar: AppBar(
+        title: const Text('Pilih Peran'),
+        centerTitle: true,
+        backgroundColor: Colors.white,
+        elevation: 0,
+        foregroundColor: AppColors.textPrimary,
+      ),
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
-              'Siapa Anda?',
+              'Selamat Datang di OjekHub',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
             const Text(
-              'Pilih peran untuk melanjutkan pendaftaran',
+              'Pilih tujuan Anda menggunakan aplikasi ini',
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey),
             ),
-            const SizedBox(height: 32),
-            
-            _buildRoleCard(
-              'Petani', 
-              'Saya pemilik lahan yang butuh tenaga kerja',
-              Icons.agriculture,
-              'petani',
+            const SizedBox(height: 48),
+
+            // Option 1: Worker (Pencari Kerja)
+            _buildMainRoleCard(
+              title: 'Pencari Kerja',
+              subtitle: 'Saya ingin mencari pekerjaan Ojek atau Harian',
+              icon: Icons.work_outline,
+              color: Colors.blue,
+              onTap: () {
+                controller.selectedRole.value = 'worker';
+                controller.selectedWorkerType.value =
+                    'all'; // Default to generic
+                Get.toNamed(Routes.PROFILE_SETUP);
+              },
             ),
-            const SizedBox(height: 16),
-            _buildRoleCard(
-              'Gudang', 
-              'Saya pemilik gudang yang butuh tenaga angkut',
-              Icons.store,
-              'warehouse',
-            ),
-            const SizedBox(height: 16),
-            _buildRoleCard(
-              'Pekerja', 
-              'Saya mencari pekerjaan (Ojek / Harian)',
-              Icons.work,
-              'worker',
-            ),
+
+            const SizedBox(height: 24),
+
+            // Option 2: Employer (Pemberi Kerja)
+            _buildEmployerSection(),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildRoleCard(String title, String subtitle, IconData icon, String value) {
-    return Obx(() {
-      final isSelected = controller.selectedRole.value == value;
-      return InkWell(
-        onTap: () {
-          controller.selectedRole.value = value;
-          if (value == 'worker') {
-             // If worker, show bottom sheet or dialog for type, or simple expand
-             // For Flow simplicity: Navigate to next step or expand inline?
-             // Let's navigate to Profile Setup directly, but pass logic to check worker type there?
-             // Prompt says: "Worker must select worker_type".
-             // Let's show a dialog for Worker Type immediately if Worker is clicked.
-             _showWorkerTypeDialog();
-          } else {
-             // Go to Profile Setup
-             controller.selectedWorkerType.value = ''; // clear
-             Get.toNamed(Routes.PROFILE_SETUP);
-          }
-        },
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.green.withOpacity(0.1) : Colors.white,
-            border: Border.all(
-              color: isSelected ? Colors.green : Colors.grey.shade300,
-              width: 2,
+  Widget _buildMainRoleCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
             ),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              Icon(icon, size: 40, color: Colors.green),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                    Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                  ],
-                ),
-              ),
-              if (isSelected) const Icon(Icons.check_circle, color: Colors.green),
-            ],
-          ),
+          ],
         ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 32, color: color),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios,
+                size: 16, color: Colors.grey.shade400),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmployerSection() {
+    return Obx(() {
+      final isExpanded = controller.isEmployerExpanded.value;
+
+      return Column(
+        children: [
+          // Main Employer Card
+          InkWell(
+            onTap: () {
+              controller.isEmployerExpanded.value = !isExpanded;
+            },
+            borderRadius: BorderRadius.circular(16),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: isExpanded
+                      ? AppColors.primaryGreen
+                      : Colors.grey.shade200,
+                  width: isExpanded ? 2 : 1,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFE8F5E9), // Light Green
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.business,
+                        size: 32, color: AppColors.primaryGreen),
+                  ),
+                  const SizedBox(width: 16),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Pemberi Kerja',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Saya membutuhkan tenaga kerja',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    isExpanded
+                        ? Icons.keyboard_arrow_up
+                        : Icons.keyboard_arrow_down,
+                    color: AppColors.textSecondary,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          // Expanded Options
+          if (isExpanded) ...[
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.only(left: 24.0),
+              child: Column(
+                children: [
+                  _buildSubRoleItem(
+                    'Petani / Pemilik Lahan',
+                    'Butuh pekerja panen, tanam, dll',
+                    Icons.agriculture,
+                    () {
+                      controller.selectedRole.value = 'petani';
+                      Get.toNamed(Routes.PROFILE_SETUP);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  _buildSubRoleItem(
+                    'Pemilik Gudang',
+                    'Butuh tenaga angkut / bongkar muat',
+                    Icons.store,
+                    () {
+                      controller.selectedRole.value = 'warehouse';
+                      Get.toNamed(Routes.PROFILE_SETUP);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
       );
     });
   }
 
-  void _showWorkerTypeDialog() {
-    Get.defaultDialog(
-      title: 'Pilih Jenis Pekerjaan',
-      content: Column(
-        children: [
-          ListTile(
-            title: const Text('Ojek (Motor)'),
-            subtitle: const Text('Transportasi & Angkut'),
-            leading: const Icon(Icons.motorcycle),
-            onTap: () {
-              controller.selectedWorkerType.value = 'ojek';
-              Get.back();
-              Get.toNamed(Routes.PROFILE_SETUP);
-            },
-          ),
-          ListTile(
-            title: const Text('Pekerja Harian'),
-            subtitle: const Text('Panen, Loading, dll'),
-            leading: const Icon(Icons.people),
-            onTap: () {
-              controller.selectedWorkerType.value = 'pekerja';
-              Get.back();
-              Get.toNamed(Routes.PROFILE_SETUP);
-            },
-          ),
-        ],
+  Widget _buildSubRoleItem(
+      String title, String subtitle, IconData icon, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 24, color: AppColors.textSecondary),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.arrow_forward,
+                size: 16, color: AppColors.textSecondary),
+          ],
+        ),
       ),
     );
   }

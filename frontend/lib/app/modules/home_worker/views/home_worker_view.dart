@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/ojek_button.dart';
 import '../../../../core/widgets/ojek_card.dart';
@@ -7,7 +8,6 @@ import '../../../../core/widgets/ojek_header.dart';
 import '../controllers/home_worker_controller.dart';
 import '../../../services/auth_service.dart';
 import '../../../../models/order_model.dart';
-import 'package:intl/intl.dart';
 import '../../../routes/app_routes.dart';
 
 class HomeWorkerView extends GetView<HomeWorkerController> {
@@ -136,8 +136,8 @@ class HomeWorkerView extends GetView<HomeWorkerController> {
                 const SizedBox(width: 12),
                 InkWell(
                   onTap: () => controller.openMap(job.mapUrl!),
-                  child: Row(
-                    children: const [
+                  child: const Row(
+                    children: [
                       Icon(Icons.map, size: 14, color: AppColors.primaryGreen),
                       SizedBox(width: 4),
                       Text("Peta",
@@ -167,10 +167,6 @@ class HomeWorkerView extends GetView<HomeWorkerController> {
           ),
 
           const SizedBox(height: 16),
-
-          // Divider optionally or just spacing
-          // Divider(color: AppColors.borderLight.withOpacity(0.5), height: 1),
-          // const SizedBox(height: 12),
 
           // Footer: Worker Count & Action
           Row(
@@ -214,7 +210,6 @@ class HomeWorkerView extends GetView<HomeWorkerController> {
                     ? () => controller.confirmApply(job)
                     : null,
                 isLoading: controller.isLoading.value && !isApplied,
-                // Optional: Change style if applied (OjekButton might need check)
                 isSecondary:
                     isApplied, // Use secondary style for disabled/applied state visual
               ),

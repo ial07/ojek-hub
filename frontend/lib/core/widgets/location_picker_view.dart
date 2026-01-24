@@ -8,7 +8,7 @@ import 'package:geolocator/geolocator.dart';
 class LocationPickerView extends StatefulWidget {
   final LatLng? initialLocation;
 
-  const LocationPickerView({Key? key, this.initialLocation}) : super(key: key);
+  const LocationPickerView({super.key, this.initialLocation});
 
   @override
   State<LocationPickerView> createState() => _LocationPickerViewState();

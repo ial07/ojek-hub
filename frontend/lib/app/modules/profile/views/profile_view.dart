@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/ojek_button.dart';
 import '../../../../core/widgets/ojek_input.dart';
+import '../../../../core/widgets/user_avatar.dart';
 import '../controllers/profile_controller.dart';
 
 class ProfileView extends GetView<ProfileController> {
@@ -27,9 +28,7 @@ class ProfileView extends GetView<ProfileController> {
       backgroundColor: Colors.grey[50], // Light background
       body: Obx(() {
         if (controller.isLoading.value) {
-          // Allow interaction but show loading indicator on button
-          // Actually, standard pattern is to disable inputs or overlay loader
-          // For now, we just pass isLoading to the button
+          // Loading state handling if needed
         }
 
         return SingleChildScrollView(
@@ -37,12 +36,16 @@ class ProfileView extends GetView<ProfileController> {
           child: Column(
             children: [
               // Avatar
-              const CircleAvatar(
-                radius: 50,
-                backgroundColor: AppColors.pastelGreen,
-                child:
-                    Icon(Icons.person, size: 50, color: AppColors.primaryBlack),
-              ),
+              Obx(() => UserAvatar(
+                    photoUrl: controller.user.value?['photo_url'],
+                    name: controller.nameController.text.isNotEmpty
+                        ? controller.nameController.text
+                        : (controller.user.value?['name']),
+                    radius: 50,
+                    backgroundColor: AppColors.pastelGreen,
+                    textColor: AppColors.primaryBlack,
+                  )),
+
               const SizedBox(height: 24),
 
               // Form

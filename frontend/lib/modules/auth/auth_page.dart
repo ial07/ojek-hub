@@ -31,7 +31,7 @@ class AuthPage extends GetView<AuthController> {
                     ),
                     child: ClipOval(
                       child: Image.asset(
-                        'assets/images/logo.png',
+                        'assets/images/logo_kerjocurup.png',
                         height: 120,
                         width: 120,
                         fit: BoxFit.cover,
@@ -41,7 +41,7 @@ class AuthPage extends GetView<AuthController> {
                   const SizedBox(height: 32),
 
                   const Text(
-                    'Selamat Datang di\\nOjekHub',
+                    'Selamat Datang di KerjoCurup',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 28,
@@ -55,7 +55,7 @@ class AuthPage extends GetView<AuthController> {
                   const SizedBox(
                       height: 12), // Reduced from 16 for tighter grouping
                   const Text(
-                    'Platform penghubung Petani dan\\nPenyedia Jasa Angkut',
+                    'Platform penghubung Petani dan Penyedia Jasa Angkut',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 16,

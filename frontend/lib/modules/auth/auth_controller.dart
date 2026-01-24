@@ -89,12 +89,17 @@ class AuthController extends GetxController {
           session.user.email?.split('@')[0] ??
           'User';
 
+      final photoUrl = session.user.userMetadata?['avatar_url'] ??
+          session.user.userMetadata?['picture'];
+
       print('[AUTH] Derived name: $name');
+      print('[AUTH] Photo URL: $photoUrl');
 
       // Call backend login - userId extracted from JWT
       print('[AUTH] Calling backend login...');
       final response = await _apiClient.dio.post('/auth/login', data: {
         'name': name,
+        'photoUrl': photoUrl, // Send photoUrl to backend
       });
       print('[AUTH] Backend response: ${response.statusCode}');
 

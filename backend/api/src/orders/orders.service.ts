@@ -65,12 +65,23 @@ export class OrdersService {
   }
 
   async getOrders() {
-    // Public endpoint: Fetch all OPEN orders
+    // Public endpoint: Fetch all OPEN orders within next 7 days
+
+    // 1. Calculate time window
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Start of today
+
+    const nextWeek = new Date(today);
+    nextWeek.setDate(today.getDate() + 7); // 7 days window
+    nextWeek.setHours(23, 59, 59, 999); // End of 7th day
+
     const { data, error } = await this.supabase
       .from("orders")
       .select("*, employer:users(name, location, phone)") // Using Supabase join if FK setup/inferred
       .eq("status", "open")
-      .order("created_at", { ascending: false });
+      .gte("job_date", today.toISOString())
+      .lte("job_date", nextWeek.toISOString())
+      .order("job_date", { ascending: true }); // Order by job info relevance (sooner first)
 
     if (error) {
       throw new BadRequestException("Gagal mengambil data lowongan");
@@ -230,7 +241,7 @@ export class OrdersService {
     const { data, error } = await this.supabase
       .from("order_applications")
       .select(
-        "id, order_id, worker_id, status, created_at, worker:worker_id(id, name, phone, email)",
+        "id, order_id, worker_id, status, created_at, worker:worker_id(id, name, phone, email, photo_url)",
       )
       .eq("order_id", orderId)
       .order("created_at", { ascending: true });

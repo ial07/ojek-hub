@@ -37,6 +37,9 @@ export class AuthController {
       userData.supabaseUser.id,
       userData.supabaseUser.email,
       body.name || userData.supabaseUser.user_metadata?.full_name,
+      body.photoUrl ||
+        userData.supabaseUser.user_metadata?.avatar_url ||
+        userData.supabaseUser.user_metadata?.picture,
     );
   }
 

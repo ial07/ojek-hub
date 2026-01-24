@@ -12,6 +12,11 @@ class JobDetailController extends GetxController {
   final HomeWorkerController _homeWorkerController =
       Get.find<HomeWorkerController>();
 
+  // Getters for UI logic
+  bool get isApplied => _homeWorkerController.appliedJobIds.contains(job.id);
+
+  bool get isWorker => _homeWorkerController.user.value?['role'] == 'worker';
+
   var distanceText = RxnString();
   var isLocationPermissionGranted = false.obs;
   var isLoadingLocation = true.obs;
@@ -52,7 +57,7 @@ class JobDetailController extends GetxController {
           desiredAccuracy: LocationAccuracy.medium);
 
       // Calculate distance
-      final Distance distance = const Distance();
+      const Distance distance = Distance();
       final double km = distance.as(
         LengthUnit.Kilometer,
         LatLng(position.latitude, position.longitude),

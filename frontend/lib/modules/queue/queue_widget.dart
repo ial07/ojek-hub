@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/ojek_button.dart';
+import '../../core/widgets/user_avatar.dart';
 import 'queue_controller.dart';
 
 class QueueWidget extends GetView<QueueController> {
@@ -161,15 +162,12 @@ class QueueWidget extends GetView<QueueController> {
                 contentPadding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 onTap: () => _showApplicantBottomSheet(context, item),
-                leading: CircleAvatar(
+                leading: UserAvatar(
                   radius: 24,
+                  photoUrl: worker['photo_url'],
+                  name: worker['name'] ?? 'Pelamar',
                   backgroundColor: Colors.grey.shade100,
-                  backgroundImage: worker['photo_url'] != null
-                      ? NetworkImage(worker['photo_url'])
-                      : null,
-                  child: worker['photo_url'] == null
-                      ? const Icon(Icons.person, color: Colors.grey)
-                      : null,
+                  textColor: Colors.grey,
                 ),
                 title: Text(
                   worker['name'] ?? 'Pelamar',
@@ -316,15 +314,12 @@ class QueueWidget extends GetView<QueueController> {
               ),
 
               // Worker Profile
-              CircleAvatar(
+              UserAvatar(
                 radius: 40,
+                photoUrl: worker['photo_url'],
+                name: worker['name'] ?? 'Pelamar',
                 backgroundColor: Colors.grey.shade100,
-                backgroundImage: worker['photo_url'] != null
-                    ? NetworkImage(worker['photo_url'])
-                    : null,
-                child: worker['photo_url'] == null
-                    ? const Icon(Icons.person, size: 40, color: Colors.grey)
-                    : null,
+                textColor: Colors.grey,
               ),
               const SizedBox(height: 16),
               Text(

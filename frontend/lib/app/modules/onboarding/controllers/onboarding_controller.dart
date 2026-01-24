@@ -11,10 +11,14 @@ class OnboardingController extends GetxController {
   // State
   var selectedRole = ''.obs;
   var selectedWorkerType = ''.obs;
-  
+  var isEmployerExpanded = false.obs; // Added for UI state
+
   // Checking state
   bool get isWorker => selectedRole.value == 'worker';
-  bool get isReadyToSubmitProfile => selectedRole.isNotEmpty && (selectedRole.value != 'worker' || selectedWorkerType.isNotEmpty);
+
+  // Worker no longer needs to select type explicitly in Onboarding first step
+  // They just select "Pencari Kerja" (worker)
+  bool get isReadyToSubmitProfile => selectedRole.isNotEmpty;
 
   Future<void> register(String name, String phone, String location) async {
     try {
@@ -25,20 +29,34 @@ class OnboardingController extends GetxController {
         return;
       }
 
+      // Default workerType to 'all' if not specified for worker, or leave null to let backend handle
+      // The requirement says "Worker role can apply for ojek jobs AND daily worker jobs"
+      // So sending 'all' or specific value that backend understands is good.
+      // We'll set it to 'all' or null. Let's strictly follow backend needs.
+      // Backend expects 'daily', 'ojek' or potentially null/all.
+      // We will send 'all' if selectedWorkerType is empty but role is worker.
+
+      String? finalWorkerType;
+      if (isWorker) {
+        finalWorkerType = selectedWorkerType.value.isNotEmpty
+            ? selectedWorkerType.value
+            : 'all';
+      }
+
       // Call Backend Register API
       final response = await _apiClient.dio.post('/auth/register', data: {
-        'token': session.accessToken, // Or confirm authentication simply by Bearer header
+        'token': session.accessToken,
         'name': name,
         'phone': phone,
         'location': location,
         'role': selectedRole.value,
-        'workerType': isWorker ? selectedWorkerType.value : null,
+        'workerType': finalWorkerType,
       });
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         // Success
         _authService.userProfile.value = response.data['user'];
-        
+
         if (isWorker) {
           Get.offAllNamed(Routes.HOME_WORKER);
         } else {

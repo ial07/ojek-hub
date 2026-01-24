@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'app/routes/app_routes.dart';
 import 'core/api/api_client.dart';
 import 'core/theme/app_theme.dart';
+import 'core/utils/date_helper.dart';
 import 'app.dart';
 import 'app/services/auth_service.dart';
 import 'modules/auth/auth_controller.dart';
@@ -23,6 +24,9 @@ Future<void> main() async {
 
     // Initialize GetStorage
     await GetStorage.init();
+
+    // Initialize DateHelper (INTL locale data)
+    await DateHelper.initialize();
 
     // Dependency Injection - Must be before auth listener
     Get.put(ApiClient());

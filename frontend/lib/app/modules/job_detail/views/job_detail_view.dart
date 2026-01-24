@@ -6,7 +6,7 @@ import '../../../../core/widgets/ojek_button.dart';
 import '../controllers/job_detail_controller.dart';
 
 class JobDetailView extends GetView<JobDetailController> {
-  const JobDetailView({Key? key}) : super(key: key);
+  const JobDetailView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -111,6 +111,73 @@ class JobDetailView extends GetView<JobDetailController> {
                       onTap: controller.openMap,
                     ),
 
+                  // WhatsApp Button in Body
+                  Obx(() {
+                    if (job.employerPhone != null &&
+                        job.employerPhone!.isNotEmpty &&
+                        (!controller.isWorker || !controller.isApplied)) {
+                      return Column(
+                        children: [
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: controller.openWhatsApp,
+                              icon: const Icon(Icons.chat_bubble_outline,
+                                  size: 18),
+                              label: const Text('Hubungi via WhatsApp'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.primaryGreen,
+                                side: const BorderSide(
+                                    color: AppColors.primaryGreen),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  }),
+
+                  // WhatsApp Button in Body (Visible only if NOT applied or NOT worker)
+                  // If applied, it moves to the sticky footer
+                  Obx(() {
+                    if (job.employerPhone != null &&
+                        job.employerPhone!.isNotEmpty &&
+                        (!controller.isWorker || !controller.isApplied)) {
+                      return Column(
+                        children: [
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            width: double.infinity,
+                            child: OutlinedButton.icon(
+                              onPressed: controller.openWhatsApp,
+                              icon: const Icon(Icons.chat_bubble_outline,
+                                  size: 18),
+                              label: const Text('Hubungi via WhatsApp'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.primaryGreen,
+                                side: const BorderSide(
+                                    color: AppColors.primaryGreen),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  }),
+
                   const SizedBox(height: 16),
 
                   // 3. Description
@@ -134,28 +201,70 @@ class JobDetailView extends GetView<JobDetailController> {
           ),
 
           // 4. Sticky Apply Button (Mobile First Interaction)
-          Container(
-            padding: const EdgeInsets.all(16), // Standard mobile padding
-            decoration: BoxDecoration(
-              color: AppColors.primaryWhite,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, -4),
-                )
-              ],
-            ),
-            child: SafeArea(
-              child: SizedBox(
+          Obx(() {
+            // Only show sticky footer for Workers
+            if (!controller.isWorker) return const SizedBox.shrink();
+
+            final isApplied = controller.isApplied; // Reactive
+            final hasPhone =
+                job.employerPhone != null && job.employerPhone!.isNotEmpty;
+
+            // If applied and no phone, hide the section entirely (or show status)
+            if (isApplied && !hasPhone) {
+              return Container(
+                padding: const EdgeInsets.all(16),
                 width: double.infinity,
-                child: OjekButton(
-                  text: 'Lamar Pekerjaan Ini',
-                  onPressed: controller.applyJob,
+                color: Colors.grey.shade100,
+                child: const Text(
+                  'Lamaran Sudah Terkirim',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                      color: Colors.grey, fontWeight: FontWeight.bold),
+                ),
+              );
+            }
+
+            // If applied and has phone -> Show "Hubungi via WhatsApp" (Follow up)
+            // If not applied -> Show "Lamar Pekerjaan"
+
+            return Container(
+              padding: const EdgeInsets.all(16), // Standard mobile padding
+              decoration: BoxDecoration(
+                color: AppColors.primaryWhite,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, -4),
+                  )
+                ],
+              ),
+              child: SafeArea(
+                child: SizedBox(
+                  width: double.infinity,
+                  child: isApplied
+                      ? OutlinedButton.icon(
+                          onPressed: controller.openWhatsApp,
+                          icon: const Icon(Icons.chat_bubble, size: 18),
+                          label: const Text('Hubungi via WhatsApp'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primaryGreen,
+                            side:
+                                const BorderSide(color: AppColors.primaryGreen),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        )
+                      : OjekButton(
+                          text: 'Lamar Pekerjaan Ini',
+                          onPressed: controller.applyJob,
+                        ),
                 ),
               ),
-            ),
-          ),
+            );
+          }),
         ],
       ),
     );

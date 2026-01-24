@@ -13,6 +13,9 @@ class ProfileController extends GetxController {
 
   final isLoading = false.obs;
 
+  // Expose user observable from AuthController
+  Rx<Map<String, dynamic>?> get user => _authController.user;
+
   @override
   void onInit() {
     super.onInit();

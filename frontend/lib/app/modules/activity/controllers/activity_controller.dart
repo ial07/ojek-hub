@@ -112,4 +112,37 @@ class ActivityController extends GetxController {
       );
     }).toList();
   }
+
+  // Filtered lists for Tabs
+  List<ActivityModel> get activeActivities {
+    return activities.where((a) {
+      final s = a.status.toLowerCase();
+      // Worker: Only Pending (Waiting for confirmation)
+      // Employer: Open
+      // User request: Active = "Lowongan lamar = pending"
+      return ['pending', 'open'].contains(s);
+    }).toList();
+  }
+
+  List<ActivityModel> get historyActivities {
+    return activities.where((a) {
+      final s = a.status.toLowerCase();
+      // Worker: Accepted (Approved), Rejected
+      // Employer: Closed, Filled
+      // User request: History = "Lowongan already approved"
+      return [
+        'accepted',
+        'rejected',
+        'completed',
+        'cancelled',
+        'closed',
+        'filled'
+      ].contains(s);
+    }).toList();
+  }
+
+  String get role {
+    final userData = box.read('user');
+    return userData?['role'] ?? 'worker';
+  }
 }
