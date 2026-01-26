@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'package:ojekhub_mobile/app/routes/app_routes.dart';
+import 'package:KerjoCurup/app/routes/app_routes.dart';
 
 class LandingController extends GetxController {
   void toLogin() {

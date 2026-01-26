@@ -13,7 +13,7 @@ import { Type } from "class-transformer";
 export class CreateOrderDto {
   @IsString()
   @IsNotEmpty()
-  @IsIn(["ojek", "pekerja"])
+  @IsIn(["ojek", "harian"])
   workerType: string;
 
   @IsInt()

@@ -17,8 +17,8 @@ class HomeEmployerView extends GetView<HomeEmployerController> {
     return Scaffold(
       backgroundColor: AppColors.scaffoldBackground,
       appBar: OjekHeader(
-        title: 'Dashboard Saya',
-        subtitle: 'Kelola lowongan dan pekerja',
+        title: 'Lowongan Saya',
+        subtitle: 'Kelola lowongan yang kamu buat',
         trailing: IconButton(
           icon: const Icon(Icons.logout, color: AppColors.pastelRedText),
           onPressed: () => Get.find<AuthService>().signOut(),
@@ -31,67 +31,49 @@ class HomeEmployerView extends GetView<HomeEmployerController> {
         }
 
         if (controller.myOrders.isEmpty) {
-          return Center(
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: const BoxDecoration(
-                        color: AppColors.pastelGreen,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.playlist_add,
-                          size: 48, color: AppColors.pastelGreenText),
-                    ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      'Belum ada lowongan',
-                      style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Buat lowongan pertamamu untuk mulai mencari pekerja.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: AppColors.textSecondary),
-                    ),
-                    const SizedBox(height: 32),
-                    SizedBox(
-                      width: double.infinity,
-                      child: OjekButton(
-                        text: 'Buat Lowongan',
-                        icon: Icons.add,
-                        onPressed: controller.isReady.value
-                            ? () => Get.toNamed(Routes.CREATE_JOB)
-                                ?.then((_) => controller.refreshOrders())
-                            : null,
-                      ),
-                    )
-                  ],
-                ),
-              ),
-            ),
-          );
+          return _buildEmptyState();
         }
 
         return RefreshIndicator(
           onRefresh: controller.refreshOrders,
           color: AppColors.primaryBlack,
-          child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(
-                16, 8, 16, 100), // Bottom padding for FAB
-            itemCount: controller.myOrders.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 16),
-            itemBuilder: (context, index) {
-              final order = controller.myOrders[index];
-              return _buildOrderCard(order);
-            },
+          child: Column(
+            children: [
+              // Filter Section
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                color: AppColors.primaryWhite,
+                child: Row(
+                  children: [
+                    _buildFilterChip('Semua', 'all'),
+                    const SizedBox(width: 8),
+                    _buildFilterChip('Harian', 'harian'),
+                    const SizedBox(width: 8),
+                    _buildFilterChip('Ojek', 'ojek'),
+                  ],
+                ),
+              ),
+
+              Expanded(
+                child: controller.filteredOrders.isEmpty
+                    ? Center(
+                        child: Text(
+                            "Tidak ada lowongan ${controller.filterType.value == 'all' ? '' : controller.filterType.value}",
+                            style: const TextStyle(
+                                color: AppColors.textSecondary)))
+                    : ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                        itemCount: controller.filteredOrders.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 16),
+                        itemBuilder: (context, index) {
+                          final order = controller.filteredOrders[index];
+                          return _buildOrderCard(order);
+                        },
+                      ),
+              ),
+            ],
           ),
         );
       }),
@@ -110,56 +92,125 @@ class HomeEmployerView extends GetView<HomeEmployerController> {
     );
   }
 
+  Widget _buildFilterChip(String label, String value) {
+    return Obx(() {
+      final isSelected = controller.filterType.value == value;
+      return InkWell(
+        onTap: () => controller.setFilter(value),
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color:
+                isSelected ? AppColors.primaryBlack : AppColors.inputBackground,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color:
+                  isSelected ? AppColors.primaryBlack : AppColors.borderLight,
+            ),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: isSelected ? Colors.white : AppColors.textSecondary,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+          ),
+        ),
+      );
+    });
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: const BoxDecoration(
+                  color: AppColors.pastelGreen,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.playlist_add,
+                    size: 48, color: AppColors.pastelGreenText),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'Belum ada lowongan',
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Mulai buat lowongan pertama kamu',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: OjekButton(
+                  text: 'Buat Lowongan',
+                  icon: Icons.add,
+                  onPressed: controller.isReady.value
+                      ? () => Get.toNamed(Routes.CREATE_JOB)
+                          ?.then((_) => controller.refreshOrders())
+                      : null,
+                ),
+              )
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildOrderCard(OrderModel order) {
     final bool isOpen = order.status == 'open';
+    final bool isHarian =
+        (order.workerType == 'harian' || order.workerType == 'pekerja');
 
     return OjekCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header: Title and Status
+          // 1. Title + Badge Row
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      order.title ?? 'Lowongan',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Dibuat: ${order.createdAt?.toIso8601String().split('T')[0] ?? '-'}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  order.title ?? 'Lowongan',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: isOpen ? AppColors.pastelGreen : AppColors.pastelRed,
-                  borderRadius: BorderRadius.circular(20),
+                  color:
+                      isHarian ? AppColors.pastelGreen : AppColors.pastelOrange,
+                  borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  isOpen ? 'BUKA' : 'TUTUP',
+                  isHarian ? 'HARIAN' : 'OJEK',
                   style: TextStyle(
-                    color: isOpen
+                    color: isHarian
                         ? AppColors.pastelGreenText
-                        : AppColors.pastelRedText,
+                        : AppColors.pastelOrangeText,
                     fontWeight: FontWeight.bold,
-                    fontSize: 11,
+                    fontSize: 10,
                   ),
                 ),
               ),
@@ -168,64 +219,85 @@ class HomeEmployerView extends GetView<HomeEmployerController> {
 
           const SizedBox(height: 12),
 
-          // Stats Row
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppColors.scaffoldBackground,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildStat('Butuh', '${order.totalWorkers} Org'),
-                _buildStat(
-                    'Tipe', (order.workerType ?? 'Umum').capitalizeFirst!),
-                _buildStat('Pelamar', '${order.currentQueue ?? 0}'),
-              ],
-            ),
+          // 2. Created Date
+          Row(
+            children: [
+              const Icon(Icons.calendar_today,
+                  size: 14, color: AppColors.textSecondary),
+              const SizedBox(width: 6),
+              Text(
+                order.createdAt != null
+                    ? 'Dibuat: ${order.createdAt!.toIso8601String().split('T')[0]}'
+                    : '-',
+                style: const TextStyle(
+                    fontSize: 12, color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 4),
+
+          // 3. Workers Needed
+          Row(
+            children: [
+              const Icon(Icons.people_alt_outlined,
+                  size: 14, color: AppColors.textSecondary),
+              const SizedBox(width: 6),
+              Text(
+                'Butuh ${order.totalWorkers} orang',
+                style: const TextStyle(
+                    fontSize: 12, color: AppColors.textSecondary),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 4),
+
+          // 4. Applicants Count
+          Row(
+            children: [
+              Icon(Icons.description_outlined,
+                  size: 14,
+                  color: isOpen
+                      ? AppColors.textSecondary
+                      : AppColors.textPlaceholder),
+              const SizedBox(width: 6),
+              Text(
+                'Pelamar: ${order.currentQueue ?? 0}',
+                style: TextStyle(
+                    fontSize: 12,
+                    color: isOpen
+                        ? AppColors.textPrimary
+                        : AppColors.textPlaceholder,
+                    fontWeight: isOpen ? FontWeight.w600 : FontWeight.normal),
+              ),
+            ],
           ),
 
           const SizedBox(height: 16),
+          const Divider(height: 1),
+          const SizedBox(height: 12),
 
-          // Full Width Action
+          // 5. Actions
           SizedBox(
             width: double.infinity,
-            child: OjekButton(
-              text: 'Lihat Pelamar',
-              isSecondary: true,
-              icon: Icons.people_outline,
+            child: OutlinedButton(
               onPressed: () {
                 Get.toNamed(Routes.QUEUE_VIEW, arguments: order);
               },
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.textPrimary,
+                side: const BorderSide(color: AppColors.borderLight),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text('Lihat Pelamar',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
             ),
-          ),
+          )
         ],
       ),
-    );
-  }
-
-  Widget _buildStat(String label, String value) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 12,
-            color: AppColors.textSecondary,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
-      ],
     );
   }
 }

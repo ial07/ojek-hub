@@ -18,6 +18,33 @@ class HomeEmployerController extends GetxController {
   var user = Rxn<Map<String, dynamic>>();
   var errorMessage = ''.obs;
 
+  // Filter
+  var filterType = 'all'.obs; // all, daily, ojek
+
+  List<OrderModel> get filteredOrders {
+    if (filterType.value == 'all') return myOrders;
+    // Map filter 'daily' -> 'pekerja' (since frontend model uses 'harian'/'pekerja' mapped from backend 'daily')
+    // Wait, backend response with mapping: "daily" -> "harian" (Phase 22).
+    // And "ojek" -> "ojek".
+    // So we filter by 'harian' or 'ojek'.
+
+    // Let's check what the model actually holds.
+    // Backend sends "harian" for daily worker.
+    // So filter value 'harian' matches 'harian'.
+    // Let's use 'harian' as key to match UI.
+
+    if (filterType.value == 'harian') {
+      return myOrders
+          .where((o) => o.workerType == 'harian' || o.workerType == 'pekerja')
+          .toList();
+    }
+    return myOrders.where((o) => o.workerType == filterType.value).toList();
+  }
+
+  void setFilter(String val) {
+    filterType.value = val;
+  }
+
   @override
   void onInit() {
     super.onInit();

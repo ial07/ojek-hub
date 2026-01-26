@@ -1,5 +1,5 @@
 import 'package:get/get.dart';
-import 'package:ojekhub_mobile/modules/auth/auth_controller.dart';
+import 'package:KerjoCurup/modules/auth/auth_controller.dart';
 import '../../home_employer/bindings/home_employer_binding.dart';
 import '../../home_worker/bindings/home_worker_binding.dart';
 import '../../profile/bindings/profile_binding.dart';

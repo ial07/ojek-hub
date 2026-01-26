@@ -56,7 +56,7 @@ class CreateJobView extends GetView<CreateJobController> {
                                     value: 'ojek',
                                     child: Text('Ojek (Motor/Angkut)')),
                                 DropdownMenuItem(
-                                    value: 'pekerja',
+                                    value: 'harian',
                                     child:
                                         Text('Pekerja Harian (Tani/Gudang)')),
                               ],

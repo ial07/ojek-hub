@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../../core/api/api_client.dart';
 import '../../../../core/theme/app_colors.dart';
+import 'package:dio/dio.dart';
 
 class CreateJobController extends GetxController {
   final ApiClient _apiClient = Get.find<ApiClient>();
@@ -149,11 +150,31 @@ class CreateJobController extends GetxController {
       }
     } catch (e) {
       print('[CREATE_JOB] Submit error: $e');
+
+      String errorMessage = 'Terjadi kesalahan saat membuat lowongan';
+
+      if (e is DioException) {
+        if (e.response?.data != null) {
+          final data = e.response!.data;
+          if (data is Map) {
+            errorMessage = data['message'] ??
+                data['pesan'] ??
+                data['error'] ??
+                errorMessage;
+          } else if (data is String) {
+            errorMessage = data;
+          }
+        } else {
+          errorMessage = e.message ?? errorMessage;
+        }
+      }
+
       Get.snackbar(
         'Gagal',
-        'Terjadi kesalahan saat membuat lowongan',
+        errorMessage,
         backgroundColor: AppColors.pastelRed,
         colorText: AppColors.pastelRedText,
+        duration: const Duration(seconds: 5),
       );
     } finally {
       isLoading.value = false;

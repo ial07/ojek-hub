@@ -17,6 +17,17 @@ class HomeWorkerController extends GetxController {
   var isLoading = false.obs;
   var isReady = false.obs;
 
+  // Filters
+  var viewFilter = 'Semua'.obs; // Unified filter state
+  final filterOptions = [
+    'Semua',
+    'Lowongan Harian',
+    'Lowongan Ojek',
+    'Hari Ini',
+    'Besok',
+    'Minggu Ini'
+  ];
+
   // Nullable models
   var availableJobs = <OrderModel>[].obs;
   // Track applied jobs locally
@@ -68,7 +79,7 @@ class HomeWorkerController extends GetxController {
 
       final List<dynamic> data = response;
       final appliedIds = data.map((e) => e['order_id'] as String).toSet();
-      appliedJobIds.value = appliedIds;
+      appliedJobIds.assignAll(appliedIds);
       print('[HOME_WORKER] Fetched ${appliedIds.length} existing applications');
     } catch (e) {
       print('[HOME_WORKER] Failed to fetch applied jobs: $e');
@@ -235,5 +246,64 @@ class HomeWorkerController extends GetxController {
   /// Check if user can apply to orders
   bool get canApplyToOrder {
     return user.value?['role'] == 'worker';
+  }
+
+  void setFilter(String filter) {
+    viewFilter.value = filter;
+  }
+
+  List<OrderModel> get filteredJobs {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    // 1. Base Filter (Standard validity check)
+    var jobs = availableJobs.where((job) {
+      if (job.jobDate == null) return false;
+      if (job.status == 'filled') return false;
+      if (job.totalWorkers != null && job.currentQueue != null) {
+        if (job.currentQueue! >= job.totalWorkers!) return false;
+      }
+      // Simple 7-day window check for relevance
+      final jobDate =
+          DateTime(job.jobDate!.year, job.jobDate!.month, job.jobDate!.day);
+      final diff = jobDate.difference(today).inDays;
+      return diff >= 0 && diff <= 7;
+    }).toList();
+
+    // 2. Apply Unified View Filter
+    final filter = viewFilter.value;
+
+    if (filter == 'Lowongan Harian') {
+      jobs = jobs
+          .where((job) =>
+              job.workerType == 'harian' || job.workerType == 'pekerja')
+          .toList();
+    } else if (filter == 'Lowongan Ojek') {
+      jobs = jobs.where((job) => job.workerType == 'ojek').toList();
+    } else if (filter == 'Hari Ini') {
+      jobs = jobs.where((job) {
+        final jobDate =
+            DateTime(job.jobDate!.year, job.jobDate!.month, job.jobDate!.day);
+        return jobDate.difference(today).inDays == 0;
+      }).toList();
+    } else if (filter == 'Besok') {
+      jobs = jobs.where((job) {
+        final jobDate =
+            DateTime(job.jobDate!.year, job.jobDate!.month, job.jobDate!.day);
+        return jobDate.difference(today).inDays == 1;
+      }).toList();
+    } else if (filter == 'Minggu Ini') {
+      // 'Minggu Ini' logic is implicitly 7 days (Base filter), so show all from base.
+    }
+
+    // 3. Sort: Urgent first (Today), then Date ASC
+    jobs.sort((a, b) {
+      final dateA = DateTime(a.jobDate!.year, a.jobDate!.month, a.jobDate!.day);
+      final dateB = DateTime(b.jobDate!.year, b.jobDate!.month, b.jobDate!.day);
+
+      return dateA.compareTo(dateB);
+    });
+
+    return jobs;
   }
 }

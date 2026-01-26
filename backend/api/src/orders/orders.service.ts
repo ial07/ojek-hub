@@ -29,7 +29,12 @@ export class OrdersService {
       .eq("id", userId)
       .single();
 
-    if (!user || (user.role !== "farmer" && user.role !== "warehouse")) {
+    if (
+      !user ||
+      (user.role !== "farmer" &&
+        user.role !== "petani" &&
+        user.role !== "warehouse")
+    ) {
       throw new ForbiddenException(
         "Hanya petani dan gudang yang bisa membuat lowongan",
       );
@@ -40,7 +45,7 @@ export class OrdersService {
       .from("orders")
       .insert({
         employer_id: userId,
-        worker_type: dto.workerType,
+        worker_type: dto.workerType === "harian" ? "daily" : dto.workerType,
         worker_count: dto.workerCount,
         description: dto.description,
         location: dto.location,
@@ -87,9 +92,14 @@ export class OrdersService {
       throw new BadRequestException("Gagal mengambil data lowongan");
     }
 
+    const transformedData = data?.map((order) => ({
+      ...order,
+      worker_type: order.worker_type === "daily" ? "harian" : order.worker_type,
+    }));
+
     return {
       status: "success",
-      data: data,
+      data: transformedData,
     };
   }
 
@@ -107,6 +117,7 @@ export class OrdersService {
     // Transform data to include current_queue from count
     const transformedData = data?.map((order) => ({
       ...order,
+      worker_type: order.worker_type === "daily" ? "harian" : order.worker_type,
       current_queue: order.order_applications?.[0]?.count ?? 0,
       // Remove the nested structure to keep response clean
       order_applications: undefined,
@@ -124,6 +135,11 @@ export class OrdersService {
 
     if (error || !data) {
       throw new NotFoundException("Lowongan tidak ditemukan");
+    }
+
+    // Transform
+    if (data.worker_type === "daily") {
+      data.worker_type = "harian";
     }
 
     return { status: "success", data };

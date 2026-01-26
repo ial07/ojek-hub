@@ -34,7 +34,7 @@ export class RegisterDto {
 
   @IsString()
   @IsOptional()
-  @IsIn(["ojek", "pekerja"])
+  @IsIn(["ojek", "harian"])
   workerType?: string;
 
   @IsString()

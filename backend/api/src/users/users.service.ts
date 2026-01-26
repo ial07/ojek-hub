@@ -70,7 +70,7 @@ export class UsersService {
 
     // Map workerType
     let dbWorkerType = workerType || null;
-    if (workerType === "pekerja") dbWorkerType = "daily";
+    if (workerType === "harian") dbWorkerType = "daily";
 
     const { data, error } = await this.supabase
       .from("users")

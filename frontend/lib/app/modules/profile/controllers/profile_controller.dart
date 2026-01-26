@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:ojekhub_mobile/modules/auth/auth_controller.dart';
+import 'package:KerjoCurup/modules/auth/auth_controller.dart';
 
 class ProfileController extends GetxController {
   final AuthController _authController = Get.find<AuthController>();

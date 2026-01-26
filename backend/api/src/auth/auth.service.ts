@@ -90,7 +90,7 @@ export class AuthService {
         role: dto.role === "petani" ? "farmer" : dto.role,
         worker_type:
           dto.role === "worker"
-            ? dto.workerType === "pekerja"
+            ? dto.workerType === "harian"
               ? "daily"
               : dto.workerType === "all"
                 ? null

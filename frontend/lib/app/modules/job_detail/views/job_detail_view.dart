@@ -31,7 +31,7 @@ class JobDetailView extends GetView<JobDetailController> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // 1. Header Info (Cleaner)
+                  // 1. Header Info (Type & Date)
                   Row(
                     children: [
                       Container(
@@ -62,26 +62,31 @@ class JobDetailView extends GetView<JobDetailController> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Title
+                  // 2. Job Title
                   Text(
                     job.title ?? 'Lowongan Pekerjaan',
                     style: const TextStyle(
-                      fontSize: 22, // Slightly reduced for mobile balance
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: AppColors.primaryBlack,
                       height: 1.3,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
 
-                  // Metadata Row (Location & People)
+                  // 3. Worker Count (Metadata)
                   Row(
                     children: [
-                      _buildMetadataItem(
-                          Icons.location_on_outlined, job.location ?? '-'),
-                      const SizedBox(width: 16),
-                      _buildMetadataItem(Icons.people_outline,
-                          'Butuh ${job.totalWorkers} Orang'),
+                      const Icon(Icons.people_outline,
+                          size: 18, color: AppColors.textSecondary),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Dibutuhkan ${job.totalWorkers} Orang',
+                        style: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500),
+                      ),
                     ],
                   ),
 
@@ -89,98 +94,55 @@ class JobDetailView extends GetView<JobDetailController> {
                   const Divider(height: 1),
                   const SizedBox(height: 24),
 
-                  // 2. Actionable Links (Instead of full map)
-                  if (job.latitude != null && job.longitude != null)
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading: Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                            color: AppColors.primaryGreen.withOpacity(0.1),
-                            shape: BoxShape.circle),
-                        child: const Icon(Icons.map,
-                            color: AppColors.primaryGreen, size: 20),
+                  // 4. Location Section (Grouped)
+                  const Text(
+                    'Lokasi',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(Icons.location_on_outlined,
+                          size: 20, color: AppColors.textPrimary),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          job.location ?? 'Alamat tidak tersedia',
+                          style: const TextStyle(
+                            color: AppColors.textPrimary,
+                            height: 1.5,
+                            fontSize: 15,
+                          ),
+                        ),
                       ),
-                      title: const Text('Lihat Lokasi di Google Maps',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 14)),
-                      subtitle: const Text('Tap untuk membuka peta',
-                          style: TextStyle(fontSize: 12)),
-                      trailing: const Icon(Icons.arrow_forward_ios,
-                          size: 14, color: AppColors.textPlaceholder),
-                      onTap: controller.openMap,
+                    ],
+                  ),
+                  if (job.latitude != null && job.longitude != null) ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: controller.openMap,
+                        icon: const Icon(Icons.map, size: 18),
+                        label: const Text('Buka di Google Maps'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.primaryBlack,
+                          side: const BorderSide(color: AppColors.borderLight),
+                          alignment: Alignment.centerLeft,
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 12, horizontal: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
                     ),
+                  ],
 
-                  // WhatsApp Button in Body
-                  Obx(() {
-                    if (job.employerPhone != null &&
-                        job.employerPhone!.isNotEmpty &&
-                        (!controller.isWorker || !controller.isApplied)) {
-                      return Column(
-                        children: [
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              onPressed: controller.openWhatsApp,
-                              icon: const Icon(Icons.chat_bubble_outline,
-                                  size: 18),
-                              label: const Text('Hubungi via WhatsApp'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: AppColors.primaryGreen,
-                                side: const BorderSide(
-                                    color: AppColors.primaryGreen),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  }),
+                  const SizedBox(height: 24),
 
-                  // WhatsApp Button in Body (Visible only if NOT applied or NOT worker)
-                  // If applied, it moves to the sticky footer
-                  Obx(() {
-                    if (job.employerPhone != null &&
-                        job.employerPhone!.isNotEmpty &&
-                        (!controller.isWorker || !controller.isApplied)) {
-                      return Column(
-                        children: [
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              onPressed: controller.openWhatsApp,
-                              icon: const Icon(Icons.chat_bubble_outline,
-                                  size: 18),
-                              label: const Text('Hubungi via WhatsApp'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: AppColors.primaryGreen,
-                                side: const BorderSide(
-                                    color: AppColors.primaryGreen),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 12),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  }),
-
-                  const SizedBox(height: 16),
-
-                  // 3. Description
+                  // 5. Description
                   const Text(
                     'Deskripsi Pekerjaan',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -194,22 +156,50 @@ class JobDetailView extends GetView<JobDetailController> {
                         fontSize: 14),
                   ),
 
+                  const SizedBox(height: 24),
+
+                  // 6. WhatsApp Button (Single Instance)
+                  Obx(() {
+                    if (job.employerPhone != null &&
+                        job.employerPhone!.isNotEmpty &&
+                        (!controller.isWorker || !controller.isApplied)) {
+                      return SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: controller.openWhatsApp,
+                          icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                          label: const Text('Hubungi via WhatsApp'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primaryGreen,
+                            side:
+                                const BorderSide(color: AppColors.primaryGreen),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  }),
+
                   const SizedBox(height: 40),
                 ],
               ),
             ),
           ),
 
-          // 4. Sticky Apply Button (Mobile First Interaction)
+          // 7. Sticky Apply Button (Sticky Footer)
           Obx(() {
-            // Only show sticky footer for Workers
+            // Only show for Workers
             if (!controller.isWorker) return const SizedBox.shrink();
 
             final isApplied = controller.isApplied; // Reactive
             final hasPhone =
                 job.employerPhone != null && job.employerPhone!.isNotEmpty;
 
-            // If applied and no phone, hide the section entirely (or show status)
+            // If applied and no phone, show status only
             if (isApplied && !hasPhone) {
               return Container(
                 padding: const EdgeInsets.all(16),
@@ -224,16 +214,59 @@ class JobDetailView extends GetView<JobDetailController> {
               );
             }
 
-            // If applied and has phone -> Show "Hubungi via WhatsApp" (Follow up)
-            // If not applied -> Show "Lamar Pekerjaan"
+            // If applied and has phone -> Show button to WA again (Reminder/Follow up)
+            // Or if logic dictates, maybe hide sticky if already applied?
+            // Requirement said "One WhatsApp button".
+            // If we have one in body, we might not need one here if applied.
+            // But sticky footer is good for main CTA.
+            // Let's keep logic:
+            // If NOT applied -> "Lamar Pekerjaan" (Primary)
+            // If APPLIED -> "Hubungi via WhatsApp" (Secondary/Follow up) IF phone exists.
 
+            if (isApplied) {
+              // If applied, the body WA button is hidden by logic above (!isApplied).
+              // So this is the ONLY WA button if applied.
+              return Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryWhite,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, -4),
+                    )
+                  ],
+                ),
+                child: SafeArea(
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: controller.openWhatsApp,
+                      icon: const Icon(Icons.chat_bubble, size: 18),
+                      label: const Text('Hubungi via WhatsApp'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.primaryGreen,
+                        side: const BorderSide(color: AppColors.primaryGreen),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }
+
+            // Not applied -> Show Apply button
             return Container(
-              padding: const EdgeInsets.all(16), // Standard mobile padding
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: AppColors.primaryWhite,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, -4),
                   )
@@ -242,47 +275,16 @@ class JobDetailView extends GetView<JobDetailController> {
               child: SafeArea(
                 child: SizedBox(
                   width: double.infinity,
-                  child: isApplied
-                      ? OutlinedButton.icon(
-                          onPressed: controller.openWhatsApp,
-                          icon: const Icon(Icons.chat_bubble, size: 18),
-                          label: const Text('Hubungi via WhatsApp'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.primaryGreen,
-                            side:
-                                const BorderSide(color: AppColors.primaryGreen),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                        )
-                      : OjekButton(
-                          text: 'Lamar Pekerjaan Ini',
-                          onPressed: controller.applyJob,
-                        ),
+                  child: OjekButton(
+                    text: 'Lamar Pekerjaan Ini',
+                    onPressed: controller.applyJob,
+                  ),
                 ),
               ),
             );
           }),
         ],
       ),
-    );
-  }
-
-  Widget _buildMetadataItem(IconData icon, String text) {
-    return Row(
-      children: [
-        Icon(icon, size: 18, color: AppColors.textSecondary),
-        const SizedBox(width: 6),
-        Text(
-          text,
-          style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 14,
-              fontWeight: FontWeight.w500),
-        ),
-      ],
     );
   }
 }

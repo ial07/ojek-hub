@@ -1,21 +1,29 @@
 import 'package:get/get.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:get_storage/get_storage.dart';
 import '../../home_worker/controllers/home_worker_controller.dart';
 import '../../../../models/order_model.dart';
-import '../../../../core/theme/app_colors.dart';
-import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class JobDetailController extends GetxController {
   late OrderModel job;
-  final HomeWorkerController _homeWorkerController =
-      Get.find<HomeWorkerController>();
+
+  // Optional HomeWorkerController (only available for Worker flow)
+  HomeWorkerController? _homeWorkerController;
+  final _box = GetStorage();
 
   // Getters for UI logic
-  bool get isApplied => _homeWorkerController.appliedJobIds.contains(job.id);
+  bool get isApplied {
+    if (_homeWorkerController == null) return false;
+    return _homeWorkerController!.appliedJobIds.contains(job.id);
+  }
 
-  bool get isWorker => _homeWorkerController.user.value?['role'] == 'worker';
+  bool get isWorker {
+    // Check storage directly as source of truth
+    final user = _box.read('user');
+    return user?['role'] == 'worker';
+  }
 
   var distanceText = RxnString();
   var isLocationPermissionGranted = false.obs;
@@ -25,7 +33,23 @@ class JobDetailController extends GetxController {
   void onInit() {
     super.onInit();
     job = Get.arguments as OrderModel;
+
+    // Try to find HomeWorkerController if it exists
+    if (Get.isRegistered<HomeWorkerController>()) {
+      _homeWorkerController = Get.find<HomeWorkerController>();
+    }
+
     _calculateDistance();
+  }
+
+  // ... distance methods ...
+
+  void applyJob() {
+    if (_homeWorkerController != null) {
+      _homeWorkerController!.confirmApply(job);
+    } else {
+      Get.snackbar('Error', 'Anda tidak dapat melamar pekerjaan ini');
+    }
   }
 
   Future<void> _calculateDistance() async {
@@ -54,7 +78,8 @@ class JobDetailController extends GetxController {
 
       // Get current position
       Position position = await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.medium);
+          locationSettings:
+              const LocationSettings(accuracy: LocationAccuracy.medium));
 
       // Calculate distance
       const Distance distance = Distance();
@@ -93,11 +118,6 @@ class JobDetailController extends GetxController {
         Get.snackbar('Error', 'Gagal membuka aplikasi peta');
       }
     }
-  }
-
-  void applyJob() {
-    // Reuse HomeWorkerController logic or call it
-    _homeWorkerController.confirmApply(job);
   }
 
   Future<void> openWhatsApp() async {

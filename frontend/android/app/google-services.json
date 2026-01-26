@@ -9,7 +9,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:30356335361:android:fa37b037da2b668f85c900",
         "android_client_info": {
-          "package_name": "com.example.ojekhub_mobile"
+          "package_name": "com.example.KerjoCurup"
         }
       },
       "oauth_client": [
@@ -17,7 +17,7 @@
           "client_id": "30356335361-oge408ovba2c0ihsdhoupfder2f9bvnu.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.ojekhub_mobile",
+            "package_name": "com.example.KerjoCurup",
             "certificate_hash": "ed96aec1ec095a13af3a8627e9a7b4be33af3bfd"
           }
         },
