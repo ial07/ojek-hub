@@ -56,7 +56,7 @@ class ProfileView extends GetView<ProfileController> {
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
+                      color: Colors.black.withValues(alpha: 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -95,6 +95,22 @@ class ProfileView extends GetView<ProfileController> {
                 isLoading: controller.isLoading.value,
                 onPressed: controller.saveProfile,
               ),
+
+              const SizedBox(height: 24),
+
+              // Privacy Policy Link
+              TextButton(
+                onPressed: controller.openPrivacyPolicy,
+                child: const Text(
+                  'Kebijakan Privasi',
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 32),
             ],
           ),
         );

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:KerjoCurup/modules/auth/auth_controller.dart';
+import '../../privacy_policy/views/privacy_policy_view.dart';
+import '../../privacy_policy/bindings/privacy_policy_binding.dart';
 
 class ProfileController extends GetxController {
   final AuthController _authController = Get.find<AuthController>();
@@ -79,5 +81,12 @@ class ProfileController extends GetxController {
 
   Future<void> logout() async {
     await _authController.logout();
+  }
+
+  void openPrivacyPolicy() {
+    Get.to(
+      () => const PrivacyPolicyView(),
+      binding: PrivacyPolicyBinding(),
+    );
   }
 }

@@ -159,30 +159,31 @@ class JobDetailView extends GetView<JobDetailController> {
                   const SizedBox(height: 24),
 
                   // 6. WhatsApp Button (Single Instance)
-                  Obx(() {
-                    if (job.employerPhone != null &&
-                        job.employerPhone!.isNotEmpty &&
-                        (!controller.isWorker || !controller.isApplied)) {
-                      return SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: controller.openWhatsApp,
-                          icon: const Icon(Icons.chat_bubble_outline, size: 18),
-                          label: const Text('Hubungi via WhatsApp'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.primaryGreen,
-                            side:
-                                const BorderSide(color: AppColors.primaryGreen),
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                  if (job.employerPhone != null &&
+                      job.employerPhone!.isNotEmpty)
+                    Obx(() {
+                      if (!controller.isWorker || !controller.isApplied) {
+                        return SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            onPressed: controller.openWhatsApp,
+                            icon:
+                                const Icon(Icons.chat_bubble_outline, size: 18),
+                            label: const Text('Hubungi via WhatsApp'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.primaryGreen,
+                              side: const BorderSide(
+                                  color: AppColors.primaryGreen),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                           ),
-                        ),
-                      );
-                    }
-                    return const SizedBox.shrink();
-                  }),
+                        );
+                      }
+                      return const SizedBox.shrink();
+                    }),
 
                   const SizedBox(height: 40),
                 ],
@@ -191,41 +192,73 @@ class JobDetailView extends GetView<JobDetailController> {
           ),
 
           // 7. Sticky Apply Button (Sticky Footer)
-          Obx(() {
-            // Only show for Workers
-            if (!controller.isWorker) return const SizedBox.shrink();
+          if (controller.isWorker)
+            Obx(() {
+              final isApplied = controller.isApplied; // Reactive
+              final hasPhone =
+                  job.employerPhone != null && job.employerPhone!.isNotEmpty;
 
-            final isApplied = controller.isApplied; // Reactive
-            final hasPhone =
-                job.employerPhone != null && job.employerPhone!.isNotEmpty;
+              // If applied and no phone, show status only
+              if (isApplied && !hasPhone) {
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  width: double.infinity,
+                  color: Colors.grey.shade100,
+                  child: const Text(
+                    'Lamaran Sudah Terkirim',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        color: Colors.grey, fontWeight: FontWeight.bold),
+                  ),
+                );
+              }
 
-            // If applied and no phone, show status only
-            if (isApplied && !hasPhone) {
-              return Container(
-                padding: const EdgeInsets.all(16),
-                width: double.infinity,
-                color: Colors.grey.shade100,
-                child: const Text(
-                  'Lamaran Sudah Terkirim',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                      color: Colors.grey, fontWeight: FontWeight.bold),
-                ),
-              );
-            }
+              // If applied and has phone -> Show button to WA again (Reminder/Follow up)
+              // Or if logic dictates, maybe hide sticky if already applied?
+              // Requirement said "One WhatsApp button".
+              // If we have one in body, we might not need one here if applied.
+              // But sticky footer is good for main CTA.
+              // Let's keep logic:
+              // If NOT applied -> "Lamar Pekerjaan" (Primary)
+              // If APPLIED -> "Hubungi via WhatsApp" (Secondary/Follow up) IF phone exists.
 
-            // If applied and has phone -> Show button to WA again (Reminder/Follow up)
-            // Or if logic dictates, maybe hide sticky if already applied?
-            // Requirement said "One WhatsApp button".
-            // If we have one in body, we might not need one here if applied.
-            // But sticky footer is good for main CTA.
-            // Let's keep logic:
-            // If NOT applied -> "Lamar Pekerjaan" (Primary)
-            // If APPLIED -> "Hubungi via WhatsApp" (Secondary/Follow up) IF phone exists.
+              if (isApplied) {
+                // If applied, the body WA button is hidden by logic above (!isApplied).
+                // So this is the ONLY WA button if applied.
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.primaryWhite,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, -4),
+                      )
+                    ],
+                  ),
+                  child: SafeArea(
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: controller.openWhatsApp,
+                        icon: const Icon(Icons.chat_bubble, size: 18),
+                        label: const Text('Hubungi via WhatsApp'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.primaryGreen,
+                          side: const BorderSide(color: AppColors.primaryGreen),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }
 
-            if (isApplied) {
-              // If applied, the body WA button is hidden by logic above (!isApplied).
-              // So this is the ONLY WA button if applied.
+              // Not applied -> Show Apply button
               return Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
@@ -241,48 +274,14 @@ class JobDetailView extends GetView<JobDetailController> {
                 child: SafeArea(
                   child: SizedBox(
                     width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: controller.openWhatsApp,
-                      icon: const Icon(Icons.chat_bubble, size: 18),
-                      label: const Text('Hubungi via WhatsApp'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.primaryGreen,
-                        side: const BorderSide(color: AppColors.primaryGreen),
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
+                    child: OjekButton(
+                      text: 'Lamar Pekerjaan Ini',
+                      onPressed: controller.applyJob,
                     ),
                   ),
                 ),
               );
-            }
-
-            // Not applied -> Show Apply button
-            return Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.primaryWhite,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, -4),
-                  )
-                ],
-              ),
-              child: SafeArea(
-                child: SizedBox(
-                  width: double.infinity,
-                  child: OjekButton(
-                    text: 'Lamar Pekerjaan Ini',
-                    onPressed: controller.applyJob,
-                  ),
-                ),
-              ),
-            );
-          }),
+            }),
         ],
       ),
     );

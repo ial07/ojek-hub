@@ -10,7 +10,10 @@ class PlatformUtils {
     } else {
       // Mobile (Android/iOS) uses deep link scheme with reverse domain notation
       // CRITICAL: Must match AndroidManifest.xml scheme exactly
-      return 'io.supabase.ojekhub://login-callback/';
+      if (kIsWeb) {
+        return 'http://localhost:3000'; // Or production URL
+      }
+      return 'com.kerjocurup.app://login-callback/';
     }
   }
 

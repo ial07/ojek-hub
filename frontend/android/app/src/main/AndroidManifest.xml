@@ -35,7 +35,7 @@
                 <category android:name="android.intent.category.DEFAULT"/>
                 <category android:name="android.intent.category.BROWSABLE"/>
                 <data
-                    android:scheme="io.supabase.ojekhub"
+                    android:scheme="com.kerjocurup.app"
                     android:host="login-callback"
                     android:pathPrefix="/" />
             </intent-filter>

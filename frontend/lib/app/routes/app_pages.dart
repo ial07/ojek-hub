@@ -20,6 +20,8 @@ import 'package:KerjoCurup/app/modules/splash/bindings/splash_binding.dart';
 import 'package:KerjoCurup/app/modules/splash/views/splash_view.dart';
 import 'package:KerjoCurup/app/modules/job_detail/bindings/job_detail_binding.dart';
 import 'package:KerjoCurup/app/modules/job_detail/views/job_detail_view.dart';
+import 'package:KerjoCurup/app/modules/privacy_policy/bindings/privacy_policy_binding.dart';
+import 'package:KerjoCurup/app/modules/privacy_policy/views/privacy_policy_view.dart';
 import 'app_routes.dart';
 
 class AppPages {
@@ -82,6 +84,11 @@ class AppPages {
       name: Routes.JOB_DETAIL,
       page: () => const JobDetailView(),
       binding: JobDetailBinding(),
+    ),
+    GetPage(
+      name: Routes.PRIVACY_POLICY,
+      page: () => const PrivacyPolicyView(),
+      binding: PrivacyPolicyBinding(),
     ),
   ];
 }
