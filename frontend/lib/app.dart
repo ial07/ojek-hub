@@ -9,7 +9,7 @@ class OjekHubApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'OjekHub',
+      title: 'KerjoCurup',
       theme: AppTheme.lightTheme,
       initialRoute: Routes.login,
       getPages: AppPages.pages,

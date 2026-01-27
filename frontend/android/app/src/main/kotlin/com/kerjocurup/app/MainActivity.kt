@@ -1,4 +1,4 @@
-package com.kerjocurup.appCurup
+package com.kerjocurup.app
 
 import io.flutter.embedding.android.FlutterActivity
 
