@@ -21,6 +21,29 @@ export class AuthService {
   }
 
   /**
+   * Normalize workerType input from various frontend values to DB-compatible values.
+   * Frontend may send: "ojek", "harian", "daily", "pekerja", "all"
+   * Database stores: "ojek" | "daily" | null
+   */
+  private normalizeWorkerType(workerType?: string): string | null {
+    if (!workerType || workerType === "all") {
+      return null; // "all" means worker accepts both types
+    }
+    // Map to DB values
+    if (
+      workerType === "harian" ||
+      workerType === "daily" ||
+      workerType === "pekerja"
+    ) {
+      return "daily";
+    }
+    if (workerType === "ojek") {
+      return "ojek";
+    }
+    return null; // Fallback for unknown values
+  }
+
+  /**
    * Login with Supabase user ID
    * Trusts Supabase as the auth provider
    */
@@ -90,11 +113,7 @@ export class AuthService {
         role: dto.role === "petani" ? "farmer" : dto.role,
         worker_type:
           dto.role === "worker"
-            ? dto.workerType === "harian"
-              ? "daily"
-              : dto.workerType === "all"
-                ? null
-                : dto.workerType
+            ? this.normalizeWorkerType(dto.workerType)
             : null,
         photo_url: dto.photoUrl || null,
       })

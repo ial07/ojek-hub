@@ -56,7 +56,7 @@ Future<void> main() async {
     print('Stack trace: $stackTrace');
     // Still try to run the app even if init partially fails
     runApp(MaterialApp(
-      title: 'OjekHub',
+      title: 'KerjoCurup',
       theme: AppTheme.lightTheme,
       initialRoute: Routes.SPLASH,
       home: Scaffold(
