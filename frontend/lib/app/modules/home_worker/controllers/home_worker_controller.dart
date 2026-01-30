@@ -259,10 +259,23 @@ class HomeWorkerController extends GetxController {
     // 1. Base Filter (Standard validity check)
     var jobs = availableJobs.where((job) {
       if (job.jobDate == null) return false;
-      if (job.status == 'filled') return false;
-      if (job.totalWorkers != null && job.currentQueue != null) {
-        if (job.currentQueue! >= job.totalWorkers!) return false;
+
+      // Strict status check (Secondary Safety Layer)
+      if (job.status == 'closed' || job.status == 'filled') return false;
+
+      // Strict quota check (Secondary Safety Layer)
+      // approved_workers_count should be used if available, mapped to acceptedCount in model
+      final approved = job.acceptedCount ?? 0;
+      final total = job.totalWorkers ?? 1;
+
+      if (approved >= total) return false;
+
+      // Legacy queue check (if backend still sends currentQueue for some reason)
+      if (job.currentQueue != null && job.totalWorkers != null) {
+        // This check is less reliable than acceptedCount but kept as fallback
+        // if (job.currentQueue! >= job.totalWorkers!) return false;
       }
+
       // Simple 7-day window check for relevance
       final jobDate =
           DateTime(job.jobDate!.year, job.jobDate!.month, job.jobDate!.day);

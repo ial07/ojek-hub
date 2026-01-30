@@ -1,12 +1,13 @@
 import 'package:get/get.dart';
 import '../../../../routes.dart';
 import '../../../../core/api/api_client.dart';
-import '../../../services/auth_service.dart';
+import '../../../../modules/auth/auth_controller.dart'; // Correct import
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:get_storage/get_storage.dart';
 
 class OnboardingController extends GetxController {
   final ApiClient _apiClient = Get.find<ApiClient>();
-  final AuthService _authService = Get.find<AuthService>();
+  final AuthController _authController = Get.find<AuthController>();
 
   // State
   var selectedRole = ''.obs;
@@ -53,16 +54,15 @@ class OnboardingController extends GetxController {
         'workerType': finalWorkerType,
       });
 
-      if (response.statusCode == 201 || response.statusCode == 200) {
-        // Success
-        _authService.userProfile.value = response.data['user'];
+      // Success - persist user data and update all auth state
+      final userData = response.data['user'];
 
-        if (isWorker) {
-          Get.offAllNamed(Routes.HOME_WORKER);
-        } else {
-          Get.offAllNamed(Routes.HOME_EMPLOYER);
-        }
-      }
+      // CRITICAL FIX: Explicitly update AuthController state synchronously
+      // This ensures MainController sees the correct role immediately
+      await _authController.setUserData(userData);
+
+      // Always go to MAIN route - MainController will determine which home view to show
+      Get.offAllNamed(Routes.MAIN);
     } catch (e) {
       Get.snackbar('Registrasi Gagal', e.toString());
       print(e);

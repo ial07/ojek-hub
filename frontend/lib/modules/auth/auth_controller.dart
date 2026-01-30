@@ -170,20 +170,26 @@ class AuthController extends GetxController {
       final response = await _apiClient.dio.get('/users/me');
       if (response.data['status'] == 'success') {
         final userData = response.data['user'];
-        await box.write('user', userData);
-
-        // Update observable state
-        user.value = userData;
-        role.value = userData['role'];
-        profile.value = userData;
-        isReady.value = true;
-
+        await setUserData(userData); // Use unified setter
         return userData;
       }
     } catch (e) {
       print('[AUTH] Fetch profile error: $e');
     }
     return null;
+  }
+
+  /// Explicitly set user data (e.g. from OnboardingController)
+  /// key: Single Source of Truth update
+  Future<void> setUserData(Map<String, dynamic> userData) async {
+    await box.write('user', userData);
+
+    // Update observable state
+    user.value = userData;
+    role.value = userData['role'];
+    profile.value = userData;
+    isReady.value = true;
+    print('[AUTH] User data updated explicitly. Role: ${role.value}');
   }
 
   /// Get current user role from storage (synced from backend)

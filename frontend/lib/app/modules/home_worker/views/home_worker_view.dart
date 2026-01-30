@@ -388,10 +388,23 @@ class HomeWorkerView extends GetView<HomeWorkerController> {
                   size: 16, color: AppColors.textSecondary),
               const SizedBox(width: 8),
               Text(
-                'Butuh ${job.totalWorkers ?? 1} orang',
+                'Dibutuhkan ${job.totalWorkers ?? 1} orang',
                 style: const TextStyle(
                     color: AppColors.textSecondary, fontSize: 14),
               ),
+              if (job.acceptedCount != null && job.acceptedCount! > 0) ...[
+                const SizedBox(width: 8),
+                Text(
+                  '(${job.acceptedCount} diterima)',
+                  style: TextStyle(
+                    color: job.isQuotaFull
+                        ? AppColors.pastelRedText
+                        : AppColors.pastelGreenText,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ],
           ),
 
@@ -401,15 +414,19 @@ class HomeWorkerView extends GetView<HomeWorkerController> {
           SizedBox(
             width: double.infinity,
             child: OjekButton(
-              text: isApplied ? 'Sudah Dilamar' : 'Lamar Pekerjaan',
+              text: job.isQuotaFull
+                  ? 'Kuota Penuh'
+                  : (isApplied ? 'Sudah Dilamar' : 'Lamar Pekerjaan'),
               onPressed: (job.id != null &&
                       !isApplied &&
+                      !job.isQuotaFull &&
+                      (job.status == 'active' || job.status == 'open') &&
                       controller.isReady.value &&
                       !controller.isLoading.value)
                   ? () => controller.confirmApply(job)
                   : null,
               isLoading: controller.isLoading.value && !isApplied,
-              isSecondary: isApplied,
+              isSecondary: isApplied || job.isQuotaFull,
             ),
           ),
         ],

@@ -4,6 +4,7 @@ class OrderModel {
   String? description;
   int? totalWorkers;
   int? currentQueue;
+  int? acceptedCount; // Count of accepted applications
   String? status;
   // Extra fields that are likely needed but I'll make them optional to strictly match prompt rules primarily
   String? location;
@@ -16,12 +17,16 @@ class OrderModel {
   String? employerPhone;
   String? employerName; // Might be useful too
 
+  // Computed property: true if quota is filled
+  bool get isQuotaFull => (acceptedCount ?? 0) >= (totalWorkers ?? 1);
+
   OrderModel({
     this.id,
     this.title,
     this.description,
     this.totalWorkers,
     this.currentQueue,
+    this.acceptedCount,
     this.status,
     this.location,
     this.workerType,
@@ -46,6 +51,7 @@ class OrderModel {
     totalWorkers = json['worker_count'] ?? json['totalWorkers'];
     // Handle count structure (e.g. from Supabase count query or explicit field)
     currentQueue = json['current_queue'] ?? json['currentQueue'] ?? 0;
+    acceptedCount = json['accepted_count'] ?? 0;
     status = json['status'];
 
     location = json['location'];
@@ -74,6 +80,7 @@ class OrderModel {
     data['description'] = description;
     data['worker_count'] = totalWorkers;
     data['current_queue'] = currentQueue;
+    data['accepted_count'] = acceptedCount;
     data['status'] = status;
     data['location'] = location;
     data['worker_type'] = workerType;
