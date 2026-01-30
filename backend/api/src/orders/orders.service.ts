@@ -71,7 +71,7 @@ export class OrdersService {
 
   async getOrders() {
     // ──────────────────────────────────────────────────────────────────────────
-    // Public endpoint: Fetch active jobs (Status = active, Quota available)
+    // Public endpoint: Fetch active jobs (Status = open, Quota available)
     // ──────────────────────────────────────────────────────────────────────────
 
     // 1. Calculate time window (Next 7 days)
@@ -82,13 +82,11 @@ export class OrdersService {
     nextWeek.setDate(today.getDate() + 7);
     nextWeek.setHours(23, 59, 59, 999);
 
-    // 2. Query Orders
-    // We fetch 'active' and 'open' for backward compatibility.
-    // We Exclude 'closed' and 'filled'.
+    // 2. Query Orders (Status: 'open' only, exclude 'filled'/'closed')
     const { data, error } = await this.supabase
       .from("orders")
       .select("*, employer:users(name, location, phone)")
-      .in("status", ["active", "open"]) // Accept both, exclude closed/filled
+      .eq("status", "open") // Only fetch jobs with status 'open'
       .gte("job_date", today.toISOString())
       .lte("job_date", nextWeek.toISOString())
       .order("job_date", { ascending: true }); // Urgent jobs first
@@ -363,9 +361,9 @@ export class OrdersService {
     const totalWorkers = order.worker_count ?? 1;
 
     // ──────────────────────────────────────────────────────────────────────────
-    // STEP 2: Check if job is still active (not already closed)
+    // STEP 2: Check if job is still active (not already filled)
     // ──────────────────────────────────────────────────────────────────────────
-    if (order.status === "closed" || order.status === "filled") {
+    if (order.status === "filled") {
       throw new BadRequestException("Lowongan sudah ditutup");
     }
 
@@ -415,19 +413,19 @@ export class OrdersService {
     const newApprovedCount = approvedAfter ?? 0;
 
     // ──────────────────────────────────────────────────────────────────────────
-    // STEP 6: If quota met, atomically close the job and reject pending apps
+    // STEP 6: If quota met, atomically fill the job and reject pending apps
     // ──────────────────────────────────────────────────────────────────────────
     if (newApprovedCount >= totalWorkers) {
-      // Atomic status update: only update if still active/open
-      // This prevents double-close race condition
-      const { error: closeError } = await this.supabase
+      // Atomic status update: only update if still open
+      // This prevents double-fill race condition
+      const { error: fillError } = await this.supabase
         .from("orders")
-        .update({ status: "closed" })
+        .update({ status: "filled" })
         .eq("id", orderId)
-        .in("status", ["open", "active"]); // Only close if not already closed
+        .eq("status", "open"); // Only fill if status is still 'open'
 
-      if (closeError) {
-        console.error("[acceptApplication] Failed to close order:", closeError);
+      if (fillError) {
+        console.error("[acceptApplication] Failed to fill order:", fillError);
       }
 
       // Reject all remaining pending applications

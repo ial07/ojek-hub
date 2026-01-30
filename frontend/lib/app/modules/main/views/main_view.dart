@@ -12,13 +12,26 @@ class MainView extends GetView<MainController> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Obx(() {
-        return IndexedStack(
+    return Obx(() {
+      // GUARD: Wait for Auth to be ready
+      if (!controller.authController.isReady.value) {
+        return const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(color: AppColors.primaryGreen),
+          ),
+        );
+      }
+
+      return Scaffold(
+        // Prevent bottom nav issues when keyboard is animating/open during transition
+        resizeToAvoidBottomInset: false,
+        body: IndexedStack(
           index: controller.currentIndex.value,
           children: [
             // Tab 0: Home
-            controller.isWorker ? const HomeWorkerView() : const HomeEmployerView(),
+            controller.isWorker
+                ? const HomeWorkerView()
+                : const HomeEmployerView(),
 
             // Tab 1: Activity/Jobs (Placeholder for now as requested default tabs)
             // Using a Scaffold to maintain styling consistency
@@ -28,10 +41,8 @@ class MainView extends GetView<MainController> {
             // Tab 2: Profile
             const ProfileView(),
           ],
-        );
-      }),
-      bottomNavigationBar: Obx(
-        () => BottomNavigationBar(
+        ),
+        bottomNavigationBar: BottomNavigationBar(
           currentIndex: controller.currentIndex.value,
           onTap: controller.changeTab,
           selectedItemColor: AppColors.primaryGreen,
@@ -59,7 +70,7 @@ class MainView extends GetView<MainController> {
             ),
           ],
         ),
-      ),
-    );
+      );
+    });
   }
 }

@@ -11,7 +11,15 @@ class MainController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _initDependencies();
+    // Wait for Auth to be ready before initializing specific home dependencies
+    if (authController.isReady.value) {
+      _initDependencies();
+    } else {
+      // If not ready (fresh start?), listen once
+      once(authController.isReady, (_) {
+        _initDependencies();
+      });
+    }
   }
 
   void changeTab(int index) {
@@ -19,6 +27,8 @@ class MainController extends GetxController {
   }
 
   void _initDependencies() {
+    print('[MAIN] Initializing dependencies. Role: ${authController.userRole}');
+
     // Inject Profile Dependencies
     ProfileBinding().dependencies();
 

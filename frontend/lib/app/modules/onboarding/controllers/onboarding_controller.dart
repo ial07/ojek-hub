@@ -4,6 +4,13 @@ import '../../../../core/api/api_client.dart';
 import '../../../../modules/auth/auth_controller.dart'; // Correct import
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:get_storage/get_storage.dart';
+import 'package:KerjoCurup/app/modules/main/views/main_view.dart';
+import 'package:KerjoCurup/app/modules/main/bindings/main_binding.dart';
+import 'package:KerjoCurup/app/modules/main/views/main_view.dart';
+import 'package:KerjoCurup/app/modules/main/bindings/main_binding.dart';
+
+import 'package:KerjoCurup/app/modules/main/views/main_view.dart';
+import 'package:KerjoCurup/app/modules/main/bindings/main_binding.dart';
 
 class OnboardingController extends GetxController {
   final ApiClient _apiClient = Get.find<ApiClient>();
@@ -61,8 +68,9 @@ class OnboardingController extends GetxController {
       // This ensures MainController sees the correct role immediately
       await _authController.setUserData(userData);
 
-      // Always go to MAIN route - MainController will determine which home view to show
-      Get.offAllNamed(Routes.MAIN);
+      // NAVIGATION FIX: Use explicit widget navigation to guarantee MainView shell
+      // bypassing any potential route alias issues or middleware interference
+      Get.offAll(() => const MainView(), binding: MainBinding());
     } catch (e) {
       Get.snackbar('Registrasi Gagal', e.toString());
       print(e);

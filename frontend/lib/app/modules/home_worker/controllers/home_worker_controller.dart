@@ -18,15 +18,8 @@ class HomeWorkerController extends GetxController {
   var isReady = false.obs;
 
   // Filters
-  var viewFilter = 'Semua'.obs; // Unified filter state
-  final filterOptions = [
-    'Semua',
-    'Lowongan Harian',
-    'Lowongan Ojek',
-    'Hari Ini',
-    'Besok',
-    'Minggu Ini'
-  ];
+  var viewFilter = 'Hari Ini'.obs; // Default to 'Hari Ini' per design
+  final filterOptions = ['Hari Ini', 'Besok', 'Minggu Ini', 'Semua'];
 
   // Nullable models
   var availableJobs = <OrderModel>[].obs;
@@ -261,7 +254,8 @@ class HomeWorkerController extends GetxController {
       if (job.jobDate == null) return false;
 
       // Strict status check (Secondary Safety Layer)
-      if (job.status == 'closed' || job.status == 'filled') return false;
+      // Database uses: 'open' (active) and 'filled' (quota met)
+      if (job.status == 'filled') return false;
 
       // Strict quota check (Secondary Safety Layer)
       // approved_workers_count should be used if available, mapped to acceptedCount in model
@@ -270,30 +264,13 @@ class HomeWorkerController extends GetxController {
 
       if (approved >= total) return false;
 
-      // Legacy queue check (if backend still sends currentQueue for some reason)
-      if (job.currentQueue != null && job.totalWorkers != null) {
-        // This check is less reliable than acceptedCount but kept as fallback
-        // if (job.currentQueue! >= job.totalWorkers!) return false;
-      }
-
-      // Simple 7-day window check for relevance
-      final jobDate =
-          DateTime(job.jobDate!.year, job.jobDate!.month, job.jobDate!.day);
-      final diff = jobDate.difference(today).inDays;
-      return diff >= 0 && diff <= 7;
+      return true;
     }).toList();
 
     // 2. Apply Unified View Filter
     final filter = viewFilter.value;
 
-    if (filter == 'Lowongan Harian') {
-      jobs = jobs
-          .where((job) =>
-              job.workerType == 'harian' || job.workerType == 'pekerja')
-          .toList();
-    } else if (filter == 'Lowongan Ojek') {
-      jobs = jobs.where((job) => job.workerType == 'ojek').toList();
-    } else if (filter == 'Hari Ini') {
+    if (filter == 'Hari Ini') {
       jobs = jobs.where((job) {
         final jobDate =
             DateTime(job.jobDate!.year, job.jobDate!.month, job.jobDate!.day);
@@ -307,6 +284,19 @@ class HomeWorkerController extends GetxController {
       }).toList();
     } else if (filter == 'Minggu Ini') {
       // 'Minggu Ini' logic is implicitly 7 days (Base filter), so show all from base.
+      jobs = jobs.where((job) {
+        final jobDate =
+            DateTime(job.jobDate!.year, job.jobDate!.month, job.jobDate!.day);
+        final diff = jobDate.difference(today).inDays;
+        return diff >= 0 && diff <= 7;
+      }).toList();
+    } else {
+      // 'Semua' - Show all valid jobs (backend limits likely ~7 days anyway, but we show all loaded)
+      jobs = jobs.where((job) {
+        final jobDate =
+            DateTime(job.jobDate!.year, job.jobDate!.month, job.jobDate!.day);
+        return jobDate.difference(today).inDays >= 0; // Future jobs only
+      }).toList();
     }
 
     // 3. Sort: Urgent first (Today), then Date ASC

@@ -3,6 +3,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/api/api_client.dart';
 import '../../routes.dart';
+import '../../modules/auth/auth_controller.dart';
 
 /// RoleController - Handles role selection with null safety
 class RoleController extends GetxController {
@@ -112,9 +113,15 @@ class RoleController extends GetxController {
         final data = response.data;
 
         if (data['user'] != null) {
-          await box.write('user', data['user']);
-          print('[ROLE] User saved, redirecting');
-          _redirect(role);
+          final userData = data['user'];
+          await box.write('user', userData);
+          print('[ROLE] User saved, updating Auth state and redirecting');
+
+          // CRITICAL: Update AuthController state immediately
+          await Get.find<AuthController>().setUserData(userData);
+
+          // Redirect to MAIN which handles the view based on role
+          Get.offAllNamed(Routes.MAIN);
         } else {
           print('[ROLE] No user in response');
           Get.snackbar('Error', 'Gagal menyimpan data');
@@ -129,10 +136,7 @@ class RoleController extends GetxController {
   }
 
   void _redirect(String role) {
-    if (role == 'worker') {
-      Get.offAllNamed(Routes.homeWorker);
-    } else {
-      Get.offAllNamed(Routes.homeEmployer);
-    }
+    // Deprecated: Logic moved to submitRole and handled by AuthController/MainController
+    Get.offAllNamed(Routes.MAIN);
   }
 }
