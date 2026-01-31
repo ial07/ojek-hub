@@ -110,7 +110,7 @@ class AuthPage extends GetView<AuthController> {
 
                     // 5. Version
                     const Text(
-                      'Versi 1.2.0',
+                      'Versi 1.3.0',
                       style: TextStyle(
                         color: AppColors.textPlaceholder,
                         fontSize: 12,
