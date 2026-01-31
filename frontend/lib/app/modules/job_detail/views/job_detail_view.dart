@@ -52,8 +52,8 @@ class JobDetailView extends GetView<JobDetailController> {
                       ),
                       const Spacer(),
                       Text(
-                        job.createdAt != null
-                            ? DateFormat('dd MMM yyyy').format(job.createdAt!)
+                        job.jobDate != null
+                            ? DateFormat('dd MMM yyyy').format(job.jobDate!)
                             : 'Baru saja',
                         style: const TextStyle(
                             color: AppColors.textSecondary, fontSize: 13),
@@ -62,17 +62,41 @@ class JobDetailView extends GetView<JobDetailController> {
                   ),
                   const SizedBox(height: 16),
 
-                  // 2. Job Title
-                  Text(
-                    job.title ?? 'Lowongan Pekerjaan',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primaryBlack,
-                      height: 1.3,
+                  // 2. Job Title (Hero Animation)
+                  Hero(
+                    tag: 'job_title_${job.id}',
+                    child: Material(
+                      color: Colors.transparent,
+                      child: Text(
+                        job.title ?? 'Lowongan Pekerjaan',
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primaryBlack,
+                          height: 1.3,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),
+
+                  // 2.5 Employer Trust Signal (New)
+                  Row(
+                    children: [
+                      const Icon(Icons.business,
+                          size: 16, color: AppColors.textPrimary),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Penyedia: ${job.employerName ?? "Penyedia Kerja"}',
+                        style: const TextStyle(
+                            color: AppColors.textPrimary,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14),
+                      ),
+                      // Optional: Verified Badge could go here
+                    ],
+                  ),
+                  const SizedBox(height: 16),
 
                   // 3. Worker Count (Metadata)
                   Row(
@@ -93,6 +117,7 @@ class JobDetailView extends GetView<JobDetailController> {
                   const SizedBox(height: 24),
                   const Divider(height: 1),
                   const SizedBox(height: 24),
+// ...
 
                   // 4. Location Section (Grouped)
                   const Text(
@@ -203,12 +228,21 @@ class JobDetailView extends GetView<JobDetailController> {
                 return Container(
                   padding: const EdgeInsets.all(16),
                   width: double.infinity,
-                  color: Colors.grey.shade100,
-                  child: const Text(
-                    'Lamaran Sudah Terkirim',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                        color: Colors.grey, fontWeight: FontWeight.bold),
+                  color: AppColors.pastelGreen,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.check_circle,
+                          color: AppColors.pastelGreenText, size: 24),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Lamaran Berhasil Dikirim',
+                        style: TextStyle(
+                            color: AppColors.pastelGreenText,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16),
+                      ),
+                    ],
                   ),
                 );
               }

@@ -127,8 +127,8 @@ class HomeWorkerView extends GetView<HomeWorkerController> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.search_off_rounded,
-                          size: 64, color: AppColors.textPlaceholder),
+                      const Icon(Icons.work_off_outlined,
+                          size: 64, color: Colors.grey),
                       const SizedBox(height: 16),
                       Text(
                         _getEmptyStateMessage(controller.viewFilter.value),

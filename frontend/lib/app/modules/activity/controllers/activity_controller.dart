@@ -1,6 +1,7 @@
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../models/order_model.dart'; // Import OrderModel
 
 class ActivityModel {
   final String id;
@@ -9,6 +10,7 @@ class ActivityModel {
   final DateTime date;
   final String status;
   final String type; // 'application' or 'order'
+  final OrderModel? relatedOrder; // Added for navigation
 
   ActivityModel({
     required this.id,
@@ -17,6 +19,7 @@ class ActivityModel {
     required this.date,
     required this.status,
     required this.type,
+    this.relatedOrder,
   });
 }
 
@@ -73,18 +76,29 @@ class ActivityController extends GetxController {
     final List<dynamic> data = response;
 
     activities.value = data.map((item) {
-      final order = item['order'] ?? {};
+      final orderData = item['order'] ?? {};
       final status = item['status'] ?? 'pending';
+
+      // Parse OrderModel safely
+      OrderModel? orderModel;
+      if (item['order'] != null) {
+        try {
+          orderModel = OrderModel.fromJson(item['order']);
+        } catch (e) {
+          print('[ACTIVITY] Error parsing order model: $e');
+        }
+      }
 
       return ActivityModel(
         id: item['id'],
-        title: order['title'] ?? 'Lowongan',
-        subtitle: order['worker_type'] != null
-            ? 'Lamaran sebagai ${order['worker_type']}'
+        title: orderData['title'] ?? 'Lowongan',
+        subtitle: orderData['worker_type'] != null
+            ? 'Lamaran sebagai ${orderData['worker_type']}'
             : 'Lamaran Pekerjaan',
-        date: DateTime.parse(item['created_at']),
+        date: DateTime.tryParse(item['created_at']) ?? DateTime.now(),
         status: status,
         type: 'application',
+        relatedOrder: orderModel,
       );
     }).toList();
   }
@@ -102,42 +116,105 @@ class ActivityController extends GetxController {
     activities.value = data.map((item) {
       final status = item['status'] ?? 'open';
 
+      OrderModel? orderModel;
+      try {
+        orderModel = OrderModel.fromJson(item);
+      } catch (e) {
+        print('[ACTIVITY] Error parsing order model: $e');
+      }
+
       return ActivityModel(
         id: item['id'],
         title: item['title'] ?? 'Lowongan',
         subtitle: '${item['worker_count']} Pekerja dibutuhkan',
-        date: DateTime.parse(item['created_at']),
+        date: DateTime.tryParse(item['created_at']) ?? DateTime.now(),
         status: status,
         type: 'order',
+        relatedOrder: orderModel,
       );
     }).toList();
   }
 
-  // Filtered lists for Tabs
-  List<ActivityModel> get activeActivities {
+  // Helper date normalization (remove time)
+  DateTime _normalizeDate(DateTime date) {
+    final localDate = date.toLocal();
+    return DateTime(localDate.year, localDate.month, localDate.day);
+  }
+
+  // --- Grouping Logic ---
+
+  // 1. TODAY: jobDate == Today
+  List<ActivityModel> get todayActivities {
+    final now = _normalizeDate(DateTime.now());
     return activities.where((a) {
-      final s = a.status.toLowerCase();
-      // Worker: Only Pending (Waiting for confirmation)
-      // Employer: Open
-      // User request: Active = "Lowongan lamar = pending"
-      return ['pending', 'open'].contains(s);
+      final dateToCheck = a.relatedOrder?.jobDate;
+      if (dateToCheck == null) return false;
+      return _normalizeDate(dateToCheck).isAtSameMomentAs(now);
     }).toList();
   }
 
-  List<ActivityModel> get historyActivities {
+  // 2. TOMORROW: jobDate == Tomorrow
+  List<ActivityModel> get tomorrowActivities {
+    final now = _normalizeDate(DateTime.now());
+    final tomorrow = now.add(const Duration(days: 1));
     return activities.where((a) {
-      final s = a.status.toLowerCase();
-      // Worker: Accepted (Approved), Rejected
-      // Employer: Closed, Filled
-      // User request: History = "Lowongan already approved"
-      return [
-        'accepted',
-        'rejected',
-        'completed',
-        'cancelled',
-        'closed',
-        'filled'
-      ].contains(s);
+      final dateToCheck = a.relatedOrder?.jobDate;
+      if (dateToCheck == null) return false;
+      return _normalizeDate(dateToCheck).isAtSameMomentAs(tomorrow);
+    }).toList();
+  }
+
+  // 3. UPCOMING: jobDate > Tomorrow
+  List<ActivityModel> get upcomingActivities {
+    final now = _normalizeDate(DateTime.now());
+    final tomorrow = now.add(const Duration(days: 1));
+    return activities.where((a) {
+      final dateToCheck = a.relatedOrder?.jobDate;
+      if (dateToCheck == null) return false;
+      return _normalizeDate(dateToCheck).isAfter(tomorrow);
+    }).toList();
+  }
+
+  // 4. LAST 7 DAYS (Recent History): jobDate < Today but >= Today-7 OR fallback to CreatedAt
+  List<ActivityModel> get recentHistoryActivities {
+    final now = _normalizeDate(DateTime.now());
+    final sevenDaysAgo = now.subtract(const Duration(days: 7));
+
+    return activities.where((a) {
+      // Logic: This section is for "What happened recently?"
+      // If it's a future job, it goes to Today/Tomorrow/Upcoming.
+      // So checking if jobDate < Today OR if jobDate is null (use application date)
+
+      DateTime dateToCheck = a.relatedOrder?.jobDate ?? a.date;
+      final normalizedInfo = _normalizeDate(dateToCheck);
+
+      // If it's in future (>= Today), it's already covered above IF it has relatedOrder.
+      // If relatedOrder is null, we treat as history context based on application date.
+      if (a.relatedOrder?.jobDate != null && !normalizedInfo.isBefore(now)) {
+        return false; // It's in Today/Tomorrow/Upcoming
+      }
+
+      // Check range: [Today-7, Today)
+      return normalizedInfo
+              .isAfter(sevenDaysAgo.subtract(const Duration(seconds: 1))) &&
+          normalizedInfo.isBefore(now);
+    }).toList();
+  }
+
+  // 5. OLDER HISTORY: < Today-7
+  List<ActivityModel> get olderHistoryActivities {
+    final now = _normalizeDate(DateTime.now());
+    final sevenDaysAgo = now.subtract(const Duration(days: 7));
+
+    return activities.where((a) {
+      DateTime dateToCheck = a.relatedOrder?.jobDate ?? a.date;
+      final normalizedInfo = _normalizeDate(dateToCheck);
+
+      if (a.relatedOrder?.jobDate != null && !normalizedInfo.isBefore(now)) {
+        return false; // Future
+      }
+
+      return normalizedInfo.isBefore(sevenDaysAgo);
     }).toList();
   }
 

@@ -24,6 +24,8 @@ class JobCard extends StatelessWidget {
     final friendlyDate = DateHelper.formatJobDate(job.jobDate);
     final isQuotaFull = (job.acceptedCount ?? 0) >= (job.totalWorkers ?? 1);
     final location = job.location ?? 'Lokasi tidak tersedia';
+    final employerName =
+        job.employerName ?? 'Penyedia Kerja'; // Fallback if null
 
     return Container(
       width: double.infinity,
@@ -50,14 +52,38 @@ class JobCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. Job Title (Large, Bold)
-                Text(
-                  job.title ?? 'Lowongan Pekerjaan',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
-                    height: 1.3,
+                // 0. Employer Identity (Trust Signal)
+                Row(
+                  children: [
+                    const Icon(Icons.business,
+                        size: 14, color: AppColors.textSecondary),
+                    const SizedBox(width: 6),
+                    Text(
+                      employerName,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+
+                // 1. Job Title (Large, Bold + Hero)
+                Hero(
+                  tag: 'job_title_${job.id}',
+                  child: Material(
+                    color: Colors.transparent,
+                    child: Text(
+                      job.title ?? 'Lowongan Pekerjaan',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.textPrimary,
+                        height: 1.3,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -93,7 +119,7 @@ class JobCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
 
-                // 4. Date Detail (Small, Gray)
+                // 4. Date Detail
                 Row(
                   children: [
                     const Icon(Icons.calendar_today_outlined,
@@ -102,7 +128,8 @@ class JobCard extends StatelessWidget {
                     Text(
                       friendlyDate,
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize:
+                            13, // Kept 13px per visual balance, metadata above bumped
                         color: AppColors.textSecondary,
                         fontWeight: FontWeight.w500,
                       ),
@@ -111,55 +138,57 @@ class JobCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // 5. Secondary Action (Link Button)
+                // 5. Secondary Action (Link Button - Outlined/Chip style)
                 if (job.mapUrl != null && onMap != null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 16.0),
-                    child: GestureDetector(
-                      onTap: onMap,
-                      behavior: HitTestBehavior.opaque,
-                      child: Row(
-                        children: [
-                          const Icon(Icons.map_outlined,
-                              size: 16, color: AppColors.primaryGreen),
-                          const SizedBox(width: 8),
-                          const Text(
-                            'Lihat Peta',
-                            style: TextStyle(
-                              color: AppColors.primaryGreen,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 14,
-                            ),
+                    child: SizedBox(
+                      height: 36,
+                      child: OutlinedButton.icon(
+                        onPressed: onMap,
+                        icon: const Icon(Icons.map_outlined,
+                            size: 16, color: AppColors.primaryGreen),
+                        label: const Text('Lihat Peta',
+                            style: TextStyle(fontSize: 13)),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.primaryGreen,
+                          side: const BorderSide(color: AppColors.primaryGreen),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
 
-                // 6. Only show Primary Action if NOT full
-                if (!isQuotaFull)
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: onApply,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primaryGreen,
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                // 6. Primary Action (Handle Full State)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: isQuotaFull ? null : onApply,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isQuotaFull
+                          ? Colors.grey.shade300
+                          : AppColors.primaryGreen,
+                      disabledBackgroundColor: Colors.grey.shade300,
+                      foregroundColor: Colors.white,
+                      disabledForegroundColor: Colors.grey.shade600,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Text(
-                        'Lamar Pekerjaan',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    ),
+                    child: Text(
+                      isQuotaFull ? 'Kuota Penuh' : 'Lamar Pekerjaan',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
+                ),
               ],
             ),
           ),
@@ -176,7 +205,7 @@ class JobCard extends StatelessWidget {
         Text(
           text,
           style: const TextStyle(
-            fontSize: 13,
+            fontSize: 14, // Bumped to 14px per audit
             fontWeight: FontWeight.w600,
             color: AppColors.textPrimary,
           ),
