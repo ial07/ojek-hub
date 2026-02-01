@@ -65,6 +65,17 @@ export class OrdersController {
   }
 
   /**
+   * Get worker activities (applied jobs)
+   */
+  @Get("activities")
+  async getActivities(@Req() req) {
+    const user = await this.getUserFromRequest(req);
+    // Role check optional but good practice
+    // await this.usersService.checkRole(user.id, ["worker"]); 
+    return this.ordersService.getAppliedJobs(user.id);
+  }
+
+  /**
    * Get order by ID (Restricted)
    * - Worker/Ojek: Allowed
    * - Employer: Allowed ONLY if owner

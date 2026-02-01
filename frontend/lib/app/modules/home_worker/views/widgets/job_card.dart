@@ -162,18 +162,26 @@ class JobCard extends StatelessWidget {
                     ),
                   ),
 
-                // 6. Primary Action (Handle Full State)
+                // 6. Primary Action (Handle Full State & Application Status)
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: isQuotaFull ? null : onApply,
+                    onPressed: (isQuotaFull || job.hasApplied) ? null : onApply,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: isQuotaFull
                           ? Colors.grey.shade300
-                          : AppColors.primaryGreen,
-                      disabledBackgroundColor: Colors.grey.shade300,
+                          : (job.applicationStatus == 'accepted'
+                              ? Colors.blue.shade100
+                              : AppColors.primaryGreen),
+                      disabledBackgroundColor:
+                          job.applicationStatus == 'accepted'
+                              ? Colors.blue.shade100
+                              : Colors.grey.shade300,
                       foregroundColor: Colors.white,
-                      disabledForegroundColor: Colors.grey.shade600,
+                      disabledForegroundColor:
+                          job.applicationStatus == 'accepted'
+                              ? Colors.blue.shade800
+                              : Colors.grey.shade600,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
@@ -181,7 +189,7 @@ class JobCard extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      isQuotaFull ? 'Kuota Penuh' : 'Lamar Pekerjaan',
+                      _getButtonLabel(),
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -195,6 +203,16 @@ class JobCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  String _getButtonLabel() {
+    if (job.applicationStatus == 'accepted') return 'Diterima';
+    if (job.applicationStatus == 'rejected') return 'Ditolak'; // Optional
+    if (job.hasApplied) return 'Sudah Dilamar';
+    if ((job.acceptedCount ?? 0) >= (job.totalWorkers ?? 1)) {
+      return 'Kuota Penuh';
+    }
+    return 'Lamar Pekerjaan';
   }
 
   Widget _buildInfoIcon(IconData icon, String text) {

@@ -19,7 +19,8 @@ class JobDetailController extends GetxController {
   // Getters for UI logic
   bool get isApplied {
     if (job.value == null || _homeWorkerController == null) return false;
-    return _homeWorkerController!.appliedJobIds.contains(job.value!.id);
+    // Fix: appliedJobIds was changed to myApplications map
+    return _homeWorkerController!.myApplications.containsKey(job.value!.id);
   }
 
   bool get isWorker {

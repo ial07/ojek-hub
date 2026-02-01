@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../controllers/activity_controller.dart';
-import 'widgets/activity_timeline_card.dart';
+import 'widgets/activity_list_card.dart';
 
 class ActivityView extends GetView<ActivityController> {
   const ActivityView({super.key});
@@ -61,7 +61,7 @@ class ActivityView extends GetView<ActivityController> {
                 _buildSectionHeader(
                     'HARI INI', Icons.today, AppColors.primaryGreen),
                 ...controller.todayActivities.map(
-                    (a) => ActivityTimelineCard(activity: a, isFeatured: true)),
+                    (a) => ActivityListCard(activity: a, isFeatured: true)),
                 const SizedBox(height: 12),
               ] else if (controller.tomorrowActivities.isNotEmpty) ...[
                 // Only show "No work today" if there is work tomorrow?
@@ -71,10 +71,9 @@ class ActivityView extends GetView<ActivityController> {
               // 2. Besok
               if (controller.tomorrowActivities.isNotEmpty) ...[
                 _buildSectionHeader('BESOK', Icons.event, Colors.orange),
-                ...controller.tomorrowActivities.map((a) =>
-                    ActivityTimelineCard(
-                        activity: a,
-                        isFeatured: false)), // isFeatured false for Tomorrow
+                ...controller.tomorrowActivities.map((a) => ActivityListCard(
+                    activity: a,
+                    isFeatured: false)), // isFeatured false for Tomorrow
                 const SizedBox(height: 12),
               ],
 
@@ -83,7 +82,7 @@ class ActivityView extends GetView<ActivityController> {
                 _buildSectionHeader(
                     'AKAN DATANG', Icons.date_range, Colors.blue),
                 ...controller.upcomingActivities
-                    .map((a) => ActivityTimelineCard(activity: a)),
+                    .map((a) => ActivityListCard(activity: a)),
                 const SizedBox(height: 12),
               ],
 
@@ -94,7 +93,7 @@ class ActivityView extends GetView<ActivityController> {
                 _buildSectionHeader(
                     '7 HARI TERAKHIR', Icons.history, Colors.grey.shade700),
                 ...controller.recentHistoryActivities
-                    .map((a) => ActivityTimelineCard(activity: a)),
+                    .map((a) => ActivityListCard(activity: a)),
                 const SizedBox(height: 12),
               ],
 
@@ -105,7 +104,7 @@ class ActivityView extends GetView<ActivityController> {
                 _buildSectionHeader(
                     'RIWAYAT LAMA', Icons.history_edu, Colors.grey.shade500),
                 ...controller.olderHistoryActivities
-                    .map((a) => ActivityTimelineCard(activity: a)),
+                    .map((a) => ActivityListCard(activity: a)),
               ],
 
               // Bottom padding

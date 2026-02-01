@@ -16,9 +16,14 @@ class OrderModel {
   String? mapUrl;
   String? employerPhone;
   String? employerName; // Might be useful too
+  String? employerPhotoUrl; // Added for Activity Redesign
+
+  // Non-Database Fields (UI/Local State)
+  String? applicationStatus; // 'pending', 'accepted', 'rejected'
 
   // Computed property: true if quota is filled
   bool get isQuotaFull => (acceptedCount ?? 0) >= (totalWorkers ?? 1);
+  bool get hasApplied => applicationStatus != null;
 
   OrderModel({
     this.id,
@@ -37,6 +42,8 @@ class OrderModel {
     this.mapUrl,
     this.employerPhone,
     this.employerName,
+    this.employerPhotoUrl,
+    this.applicationStatus, // Added to constructor
   });
 
   OrderModel.fromJson(Map<String, dynamic> json) {

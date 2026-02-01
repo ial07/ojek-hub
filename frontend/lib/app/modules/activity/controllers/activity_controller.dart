@@ -66,10 +66,11 @@ class ActivityController extends GetxController {
   }
 
   Future<void> _fetchWorkerActivities(String userId) async {
-    // Fetch applications joined with order details
+    // Fetch applications joined with order details AND employer details
+    // Backend equivalent: order:orders(..., employer:users(name, photo_url, location))
     final response = await _supabase
         .from('order_applications')
-        .select('*, order:orders(*)')
+        .select('*, order:orders(*, employer:users(name, photo_url, location))')
         .eq('worker_id', userId)
         .order('created_at', ascending: false);
 
@@ -84,6 +85,15 @@ class ActivityController extends GetxController {
       if (item['order'] != null) {
         try {
           orderModel = OrderModel.fromJson(item['order']);
+
+          // Manually Map Employer Info if not covered by fromJson automatic flattening
+          // (OrderModel.fromJson usually handles flat fields, but here we have nested 'employer')
+          if (item['order']['employer'] != null) {
+            final emp = item['order']['employer'];
+            orderModel.employerName = emp['name'];
+            orderModel.employerPhotoUrl = emp['photo_url']; // Map Photo URL
+            // For now, let's store it dynamically or update OrderModel later
+          }
         } catch (e) {
           print('[ACTIVITY] Error parsing order model: $e');
         }
@@ -92,9 +102,12 @@ class ActivityController extends GetxController {
       return ActivityModel(
         id: item['id'],
         title: orderData['title'] ?? 'Lowongan',
-        subtitle: orderData['worker_type'] != null
-            ? 'Lamaran sebagai ${orderData['worker_type']}'
-            : 'Lamaran Pekerjaan',
+        // New Subtitle Logic: "Penyedia: [Name]"
+        subtitle: orderModel?.employerName != null
+            ? 'Penyedia: ${orderModel!.employerName}'
+            : (orderData['worker_type'] != null
+                ? 'Lamaran sebagai ${orderData['worker_type']}'
+                : 'Lamaran Pekerjaan'),
         date: DateTime.tryParse(item['created_at']) ?? DateTime.now(),
         status: status,
         type: 'application',

@@ -23,8 +23,8 @@ class HomeWorkerController extends GetxController {
 
   // Nullable models
   var availableJobs = <OrderModel>[].obs;
-  // Track applied jobs locally
-  var appliedJobIds = <String>{}.obs;
+  // Track applied jobs locally: {orderId: status} (e.g. 'pending', 'accepted')
+  var myApplications = <String, String>{}.obs;
   var user = Rxn<Map<String, dynamic>>();
   var errorMessage = ''.obs;
 
@@ -55,6 +55,9 @@ class HomeWorkerController extends GetxController {
       fetchAppliedJobs(),
     ]);
 
+    // Apply mapping after both fetch complete
+    _mapApplicationStatusToJobs();
+
     // Mark as ready
     isReady.value = true;
     print('[HOME_WORKER] Ready');
@@ -67,13 +70,21 @@ class HomeWorkerController extends GetxController {
 
       final response = await _supabase
           .from('order_applications')
-          .select('order_id')
+          .select('order_id, status') // Fetch status too
           .eq('worker_id', userId);
 
       final List<dynamic> data = response;
-      final appliedIds = data.map((e) => e['order_id'] as String).toSet();
-      appliedJobIds.assignAll(appliedIds);
-      print('[HOME_WORKER] Fetched ${appliedIds.length} existing applications');
+      final Map<String, String> statusMap = {};
+
+      for (var item in data) {
+        if (item['order_id'] != null) {
+          statusMap[item['order_id'].toString()] =
+              item['status']?.toString() ?? 'pending';
+        }
+      }
+
+      myApplications.assignAll(statusMap);
+      print('[HOME_WORKER] Fetched ${statusMap.length} existing applications');
     } catch (e) {
       print('[HOME_WORKER] Failed to fetch applied jobs: $e');
     }
@@ -104,12 +115,23 @@ class HomeWorkerController extends GetxController {
     }
   }
 
+  // Maps local application status to the jobs list
+  void _mapApplicationStatusToJobs() {
+    for (var job in availableJobs) {
+      if (job.id != null && myApplications.containsKey(job.id)) {
+        job.applicationStatus = myApplications[job.id];
+      }
+    }
+    availableJobs.refresh(); // Trigger Obx update
+  }
+
   Future<void> refreshJobs() async {
     if (!isReady.value) {
       print('[HOME_WORKER] Not ready, blocking refresh');
       return;
     }
-    await fetchJobs();
+    await Future.wait([fetchJobs(), fetchAppliedJobs()]);
+    _mapApplicationStatusToJobs();
   }
 
   Future<void> openMap(String url) async {
@@ -186,7 +208,8 @@ class HomeWorkerController extends GetxController {
         print('[HOME_WORKER] Application successful');
 
         // Update local state instantly
-        appliedJobIds.add(orderId);
+        myApplications[orderId] = 'pending';
+        _mapApplicationStatusToJobs(); // Update the specific job
 
         Get.snackbar(
           'Sukses',
@@ -194,7 +217,8 @@ class HomeWorkerController extends GetxController {
           backgroundColor: AppColors.pastelGreen,
           colorText: AppColors.pastelGreenText,
         );
-        await fetchJobs();
+
+        // No need to re-fetch entire list, local update is faster
       }
     } catch (e) {
       print('[HOME_WORKER] Apply error: $e');

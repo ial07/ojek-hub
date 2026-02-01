@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // For Clipboard
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../models/order_model.dart';
 import '../../../../routes/app_routes.dart';
@@ -96,6 +94,8 @@ class EmployerJobCard extends StatelessWidget {
     }
 
     // Action Logic
+    // Stability Phase: "Bagikan Lowongan" removed.
+    // Default action is always "Lihat Detail" unless specifically needing Queue action.
     String primaryActionLabel = 'Lihat Detail';
     IconData primaryActionIcon = Icons.arrow_forward;
     VoidCallback onPrimaryAction = onTap; // Default nav
@@ -106,81 +106,8 @@ class EmployerJobCard extends StatelessWidget {
         primaryActionIcon = Icons.people_alt_outlined;
         onPrimaryAction =
             () => Get.toNamed(Routes.QUEUE_VIEW, arguments: order);
-      } else {
-        primaryActionLabel = 'Bagikan Lowongan';
-        // Visual requirement: WhatsApp icon only (or share icon if generic)
-        // Prompt says "Button icon: WhatsApp icon only". Flutter doesn't have built-in WA icon easily accessible
-        // without font_awesome or similar, unless provided in assets.
-        // I will use Icons.share or Icons.chat if WA specific not available.
-        // Actually, prompt says "Button icon: WhatsApp icon only". I'll check if I can use a generic share or text.
-        primaryActionIcon = Icons.share; // Safe fallback
-
-        onPrimaryAction = () async {
-          // 1. Prepare Data
-          final title = order.title ?? 'Lowongan Pekerjaan';
-          final loc = order.location ?? 'Lokasi tidak tersedia';
-          final needed = total;
-
-          // Date Formatting
-          String dateStr = '-';
-          if (order.jobDate != null) {
-            final d = order.jobDate!.isUtc
-                ? order.jobDate!.toLocal()
-                : order.jobDate!;
-            dateStr = DateFormat('EEEE, d MMM yyyy', 'id_ID').format(d);
-            // Fallback formatting
-            if (dateStr.contains('EEEE')) {
-              dateStr = DateFormat('d MMM yyyy').format(d);
-            }
-          }
-
-          final publicUrl = 'https://kerjocurup.app/jobs/${order.id}';
-
-          // 2. Compose Message
-          final message = "Halo, ada lowongan kerja tersedia.\n\n"
-              "Pekerjaan: $title\n"
-              "Lokasi: $loc\n"
-              "Tanggal: $dateStr\n"
-              "Jumlah Dibutuhkan: $needed orang\n\n"
-              "Buka di aplikasi KerjoCurup:\n"
-              "$publicUrl";
-
-          // 3. Analytics Stub
-          print(
-              '[ANALYTICS] share_job_whatsapp: {order_id: ${order.id}, status: ${order.status}}');
-
-          // 4. Launch WhatsApp
-          final waUrl =
-              Uri.parse('https://wa.me/?text=${Uri.encodeComponent(message)}');
-
-          try {
-            bool launched = false;
-            // Try Launching (Safe Mode)
-            if (await canLaunchUrl(waUrl)) {
-              launched =
-                  await launchUrl(waUrl, mode: LaunchMode.externalApplication);
-            }
-
-            // Fallback if WA launch fails
-            if (!launched) {
-              throw 'Could not launch WhatsApp';
-            }
-          } catch (e) {
-            // Fallback: Clipboard
-            print('[SHARE] WhatsApp failed, falling back to Clipboard: $e');
-            Clipboard.setData(ClipboardData(text: message));
-            Get.snackbar(
-              'Link Disalin',
-              'WhatsApp tidak terinstall. Pesan disalin ke clipboard.',
-              snackPosition: SnackPosition.BOTTOM,
-              backgroundColor: Colors.black87,
-              colorText: Colors.white,
-              margin: const EdgeInsets.all(16),
-              duration: const Duration(seconds: 3),
-            );
-          }
-        };
       }
+      // Else: Fallback to "Lihat Detail" (Share removed)
     }
 
     // Visual Styles

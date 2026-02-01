@@ -31,158 +31,226 @@ class JobDetailView extends GetView<JobDetailController> {
           return const Center(child: Text('Data lowongan tidak ditemukan'));
         }
 
+        final bool hasApplied = controller.isApplied; // Reactive
+        final String status =
+            job.applicationStatus ?? (hasApplied ? 'pending' : 'open');
+        final String statusLabel = hasApplied
+            ? (status == 'accepted'
+                ? 'Diterima'
+                : (status == 'rejected' ? 'Ditolak' : 'Menunggu Konfirmasi'))
+            : 'Tersedia';
+        final Color statusColor = status == 'accepted'
+            ? AppColors.primaryGreen
+            : (status == 'rejected'
+                ? Colors.red
+                : (hasApplied ? Colors.orange : Colors.grey));
+
         return Column(
           children: [
+            // 0. Context Header (Sticky Top)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+              color: statusColor.withValues(alpha: 0.1),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '${job.workerType?.toUpperCase() ?? "PEKERJA"}  •  ${job.jobDate != null ? DateFormat('d MMM').format(job.jobDate!) : "N/A"}  •  ',
+                    style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary),
+                  ),
+                  Text(
+                    statusLabel.toUpperCase(),
+                    style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: statusColor),
+                  ),
+                ],
+              ),
+            ),
+
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // 1. Header Info (Type & Date)
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: AppColors.pastelGreen,
-                            borderRadius: BorderRadius.circular(8),
+                    // 1. Provider Identity Section (Hero Card)
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.06),
+                            blurRadius: 16,
+                            offset: const Offset(0, 4),
                           ),
-                          child: Text(
-                            job.workerType?.toUpperCase() ?? 'PEKERJA',
-                            style: const TextStyle(
-                              color: AppColors.pastelGreenText,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 30, // 60px size
+                            backgroundColor: Colors.grey.shade200,
+                            backgroundImage: job.employerPhotoUrl != null
+                                ? NetworkImage(job.employerPhotoUrl!)
+                                : null,
+                            child: job.employerPhotoUrl == null
+                                ? Text(job.employerName?[0] ?? '?',
+                                    style: const TextStyle(
+                                        fontSize: 20, color: Colors.grey))
+                                : null,
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  job.employerName ?? 'Penyedia Kerja',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.primaryBlack,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                const Text(
+                                  'Pemilik Pekerjaan',
+                                  style: TextStyle(
+                                      color: AppColors.textSecondary,
+                                      fontSize: 13),
+                                ),
+                                const SizedBox(height: 4),
+                                if (job.employerPhone != null)
+                                  Text(
+                                    'Terverifikasi', // Placeholder trust signal
+                                    style: TextStyle(
+                                        color: AppColors.primaryGreen,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                              ],
                             ),
                           ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          job.jobDate != null
-                              ? DateFormat('dd MMM yyyy').format(job.jobDate!)
-                              : 'Baru saja',
-                          style: const TextStyle(
-                              color: AppColors.textSecondary, fontSize: 13),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 24),
 
-                    // 2. Job Title (Hero Animation)
-                    // Hero tag requires unique ID. Using job.id is fine.
-                    Hero(
-                      tag: 'job_title_${job.id}',
-                      child: Material(
-                        color: Colors.transparent,
-                        child: Text(
-                          job.title ?? 'Lowongan Pekerjaan',
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primaryBlack,
-                            height: 1.3,
-                          ),
-                        ),
+                    // 2. Job Title & Role Context
+                    Text(
+                      job.title ?? 'Lowongan Pekerjaan',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.primaryBlack,
+                        height: 1.2,
                       ),
                     ),
                     const SizedBox(height: 8),
-
-                    // 2.5 Employer Trust Signal (New)
-                    Row(
-                      children: [
-                        const Icon(Icons.business,
-                            size: 16, color: AppColors.textPrimary),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Penyedia: ${job.employerName ?? "Penyedia Kerja"}',
-                          style: const TextStyle(
-                              color: AppColors.textPrimary,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14),
-                        ),
-                        // Optional: Verified Badge could go here
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-
-                    // 3. Worker Count (Metadata)
-                    Row(
-                      children: [
-                        const Icon(Icons.people_outline,
-                            size: 18, color: AppColors.textSecondary),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Dibutuhkan ${job.totalWorkers} Orang',
-                          style: const TextStyle(
-                              color: AppColors.textSecondary,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 24),
-                    const Divider(height: 1),
-                    const SizedBox(height: 24),
-
-                    // 4. Location Section (Grouped)
-                    const Text(
-                      'Lokasi',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(Icons.location_on_outlined,
-                            size: 20, color: AppColors.textPrimary),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            job.location ?? 'Alamat tidak tersedia',
-                            style: const TextStyle(
-                              color: AppColors.textPrimary,
-                              height: 1.5,
-                              fontSize: 15,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                            color: Colors.blue.withValues(alpha: 0.1)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.badge_outlined,
+                              size: 16, color: Colors.blue),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              'Kamu mendaftar sebagai ${job.workerType ?? "Pekerja"}', // "Peran Kamu"
+                              style: const TextStyle(
+                                color: Colors.blue,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 13,
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                    if (job.latitude != null && job.longitude != null) ...[
-                      const SizedBox(height: 12),
-                      SizedBox(
+
+                    const SizedBox(height: 24),
+
+                    // 3. Location (Static Preview)
+                    const Text('Lokasi Pekerjaan',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16)),
+                    const SizedBox(height: 12),
+                    InkWell(
+                      onTap: controller.openMap,
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        height: 80,
                         width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: controller.openMap,
-                          icon: const Icon(Icons.map, size: 18),
-                          label: const Text('Buka di Google Maps'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.primaryBlack,
-                            side:
-                                const BorderSide(color: AppColors.borderLight),
-                            alignment: Alignment.centerLeft,
-                            padding: const EdgeInsets.symmetric(
-                                vertical: 12, horizontal: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 80,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade300,
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(12),
+                                  bottomLeft: Radius.circular(12),
+                                ),
+                              ),
+                              child: const Center(
+                                  child: Icon(Icons.map, color: Colors.grey)),
                             ),
-                          ),
+                            Expanded(
+                              child: Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 16),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      job.location ?? 'Lokasi tidak tersedia',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 14),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    const Text('Ketuk untuk lihat di peta',
+                                        style: TextStyle(
+                                            fontSize: 12,
+                                            color: AppColors.primaryGreen)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                    ],
+                    ),
 
                     const SizedBox(height: 24),
 
-                    // 5. Description
-                    const Text(
-                      'Deskripsi Pekerjaan',
-                      style:
-                          TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
+                    // 4. Job Details
+                    const Text('Deskripsi',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16)),
                     const SizedBox(height: 8),
                     Text(
                       job.description ?? 'Tidak ada deskripsi',
@@ -192,132 +260,84 @@ class JobDetailView extends GetView<JobDetailController> {
                           fontSize: 14),
                     ),
 
-                    const SizedBox(height: 24),
-
-                    // 6. WhatsApp Button (Single Instance)
-                    if (job.employerPhone != null &&
-                        job.employerPhone!.isNotEmpty)
-                      Obx(() {
-                        if (!controller.isWorker || !controller.isApplied) {
-                          return SizedBox(
-                            width: double.infinity,
-                            child: OutlinedButton.icon(
-                              onPressed: controller.openWhatsApp,
-                              icon: const Icon(Icons.chat_bubble_outline,
-                                  size: 18),
-                              label: const Text('Hubungi via WhatsApp'),
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: AppColors.primaryGreen,
-                                side: const BorderSide(
-                                    color: AppColors.primaryGreen),
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 16),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            ),
-                          );
-                        }
-                        return const SizedBox.shrink();
-                      }),
-
                     const SizedBox(height: 40),
                   ],
                 ),
               ),
             ),
 
-            // 7. Sticky Apply Button (Sticky Footer)
-            if (controller.isWorker)
-              Obx(() {
-                final isApplied = controller.isApplied; // Reactive
-                final hasPhone =
-                    job.employerPhone != null && job.employerPhone!.isNotEmpty;
+            // 7. Action Bar (Bottom Fixed)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, -4),
+                  )
+                ],
+              ),
+              child: SafeArea(
+                child: Column(
+                  children: [
+                    // Action Logic:
+                    // 1. If Accepted -> Contact Provider (Primary)
+                    // 2. If Pending -> Cancel (Danger/Outline) - *Cancel not imp yet*, so show Disable/Waiting
+                    // 3. If Not Applied -> Apply (Primary)
 
-                // If applied and no phone, show status only
-                if (isApplied && !hasPhone) {
-                  return Container(
-                    padding: const EdgeInsets.all(16),
-                    width: double.infinity,
-                    color: AppColors.pastelGreen,
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.check_circle,
-                            color: AppColors.pastelGreenText, size: 24),
-                        SizedBox(width: 12),
-                        Text(
-                          'Lamaran Berhasil Dikirim',
-                          style: TextStyle(
-                              color: AppColors.pastelGreenText,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                if (isApplied) {
-                  return Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryWhite,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, -4),
-                        )
-                      ],
-                    ),
-                    child: SafeArea(
-                      child: SizedBox(
+                    if (status == 'accepted' && job.employerPhone != null)
+                      SizedBox(
                         width: double.infinity,
-                        child: OutlinedButton.icon(
+                        child: ElevatedButton.icon(
                           onPressed: controller.openWhatsApp,
                           icon: const Icon(Icons.chat_bubble, size: 18),
-                          label: const Text('Hubungi via WhatsApp'),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.primaryGreen,
-                            side:
-                                const BorderSide(color: AppColors.primaryGreen),
+                          label: const Text('Hubungi Penyedia'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primaryGreen,
+                            foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                                borderRadius: BorderRadius.circular(12)),
                           ),
                         ),
-                      ),
-                    ),
-                  );
-                }
-
-                // Not applied -> Show Apply button
-                return Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryWhite,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, -4),
                       )
-                    ],
-                  ),
-                  child: SafeArea(
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: OjekButton(
-                        text: 'Lamar Pekerjaan Ini',
-                        onPressed: controller.applyJob,
+                    else if (hasApplied && status == 'pending')
+                      // "Batalkan" not implemented backend-side yet, so show Status
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        decoration: BoxDecoration(
+                            color: Colors.orange.shade50,
+                            borderRadius: BorderRadius.circular(12)),
+                        child: const Center(
+                            child: Text('Menunggu Konfirmasi',
+                                style: TextStyle(
+                                    color: Colors.orange,
+                                    fontWeight: FontWeight.bold))),
+                      )
+                    else if (hasApplied)
+                      // Rejected/etc
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: () => Get.back(),
+                          child: const Text('Cari Lowongan Lain'),
+                        ),
+                      )
+                    else
+                      SizedBox(
+                        width: double.infinity,
+                        child: OjekButton(
+                          text: 'Lamar Pekerjaan Ini',
+                          onPressed: controller.applyJob,
+                        ),
                       ),
-                    ),
-                  ),
-                );
-              }),
+                  ],
+                ),
+              ),
+            ),
           ],
         );
       }),

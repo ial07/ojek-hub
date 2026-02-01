@@ -285,6 +285,52 @@ export class OrdersService {
     };
   }
 
+  async getAppliedJobs(workerId: string) {
+    // Requirements:
+    // 1. Fetch applications for this worker
+    // 2. Join with order details
+    // 3. Join with employer details (Name, Photo, Location) for Trust Signal
+
+    console.log("[getAppliedJobs] Fetching for worker:", workerId);
+
+    const { data, error } = await this.supabase
+      .from("order_applications")
+      .select(
+        `
+        id,
+        status, // pending, accepted, rejected
+        created_at,
+        order:orders (
+          id,
+          title,
+          description,
+          job_date,
+          location,
+          worker_type,
+          status, // open, filled, etc.
+          employer:users (
+            name,
+            photo_url,
+            location,
+            phone
+          )
+        )
+      `,
+      )
+      .eq("worker_id", workerId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.log("[getAppliedJobs] Error:", error.message);
+      throw new BadRequestException("Gagal mengambil riwayat lamaran");
+    }
+
+    return {
+      status: "success",
+      data: data,
+    };
+  }
+
   async getQueue(userId: string, orderId: string) {
     console.log("[getQueue] orderId:", orderId, "userId:", userId);
 
