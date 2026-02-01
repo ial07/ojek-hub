@@ -3,6 +3,7 @@ import 'package:get_storage/get_storage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart'; // Added
 import 'package:dio/dio.dart'; // Added
+import 'package:app_links/app_links.dart'; // Added for Deep Linking
 import '../../core/api/api_client.dart';
 import '../../app/routes/app_routes.dart';
 import '../../core/utils/platform_utils.dart';
@@ -21,6 +22,8 @@ class AuthController extends GetxController {
   final Rx<Map<String, dynamic>?> profile = Rx<Map<String, dynamic>?>(null);
   final Rx<String?> role = Rx<String?>(null);
 
+  // Deep Link State
+  String? _pendingJobId;
   var _hasCheckedSession = false;
 
   @override
@@ -29,7 +32,73 @@ class AuthController extends GetxController {
     // Check session on controller initialization (only once)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       checkSessionAndRedirect();
+      _initDeepLinks();
     });
+  }
+
+  /// Initialize AppLinks for Deep Linking
+  Future<void> _initDeepLinks() async {
+    try {
+      final appLinks = AppLinks();
+
+      // 1. Cold Start
+      final initialUri = await appLinks.getInitialLink();
+      if (initialUri != null) {
+        print('[AUTH] Cold start deep link: $initialUri');
+        _handleDeepLink(initialUri);
+      }
+
+      // 2. Background / Foreground Stream
+      appLinks.uriLinkStream.listen((uri) {
+        print('[AUTH] Stream deep link: $uri');
+        _handleDeepLink(uri);
+      });
+    } catch (e) {
+      print('[AUTH] Deep Link init error: $e');
+    }
+  }
+
+  /// Handle incoming deep link URI
+  void _handleDeepLink(Uri uri) {
+    // Expected format: https://kerjocurup.app/jobs/{id}
+    // OR scheme: kerjocurup://jobs/{id}
+    if (uri.pathSegments.isNotEmpty &&
+        (uri.pathSegments.contains('jobs') ||
+            uri.pathSegments.first == 'jobs')) {
+      // Extract ID (last segment usually)
+      // path: /jobs/123 -> segments: ['jobs', '123']
+      final id = uri.pathSegments.last;
+      if (id.isNotEmpty) {
+        print('[AUTH] Deep Link Job ID identified: $id');
+        _navigateToJob(id);
+      }
+    }
+  }
+
+  void _navigateToJob(String jobId) {
+    if (isReady.value && user.value != null) {
+      // 1. Role Guard
+      final currentRole = userRole;
+      if (currentRole == 'worker' || currentRole == 'ojek') {
+        print('[AUTH] Authorized. Navigating to Job $jobId');
+        Get.toNamed(Routes.JOB_DETAIL, arguments: jobId);
+      } else {
+        print('[AUTH] Unauthorized access attempt by $currentRole');
+        Get.snackbar(
+            'Akses Ditolak', 'Hanya Pekerja/Ojek yang bisa melihat lowongan.');
+        _redirectByRole(currentRole);
+      }
+    } else {
+      // User NOT logged in -> Save for later
+      print('[AUTH] User NOT ready, queuing Job $jobId');
+      _pendingJobId = jobId;
+
+      // If we are already on Login page, maybe show a message?
+      // Or just ensure we redirect after login.
+      if (Get.currentRoute != Routes.LOGIN) {
+        Get.toNamed(Routes.LOGIN);
+      }
+    }
   }
 
   /// Check if session exists and redirect accordingly
@@ -126,7 +195,22 @@ class AuthController extends GetxController {
         profile.value = userData;
         isReady.value = true;
 
-        _redirectByRole(userData['role']);
+        if (_pendingJobId != null) {
+          print('[AUTH] Found pending job redirect: $_pendingJobId');
+          final target = _pendingJobId!;
+          _pendingJobId = null; // Clear
+
+          // Check Role for Pending Job
+          if (role.value == 'worker' || role.value == 'ojek') {
+            Get.offAllNamed(Routes.JOB_DETAIL, arguments: target);
+          } else {
+            Get.snackbar('Akses Ditolak',
+                'Hanya Pekerja/Ojek yang bisa melihat lowongan.');
+            _redirectByRole(userData['role']);
+          }
+        } else {
+          _redirectByRole(userData['role']);
+        }
       } else {
         Get.snackbar('Error', data['pesan'] ?? 'Login gagal');
       }

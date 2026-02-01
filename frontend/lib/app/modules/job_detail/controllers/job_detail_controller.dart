@@ -4,10 +4,13 @@ import 'package:latlong2/latlong.dart';
 import 'package:get_storage/get_storage.dart';
 import '../../home_worker/controllers/home_worker_controller.dart';
 import '../../../../models/order_model.dart';
+import '../../../../core/api/api_client.dart'; // Added
 import 'package:url_launcher/url_launcher.dart';
 
 class JobDetailController extends GetxController {
-  late OrderModel job;
+  // Refactor: job is now reactive to support async loading (Deep Link)
+  final job = Rxn<OrderModel>();
+  final isLoadingJob = true.obs;
 
   // Optional HomeWorkerController (only available for Worker flow)
   HomeWorkerController? _homeWorkerController;
@@ -15,8 +18,8 @@ class JobDetailController extends GetxController {
 
   // Getters for UI logic
   bool get isApplied {
-    if (_homeWorkerController == null) return false;
-    return _homeWorkerController!.appliedJobIds.contains(job.id);
+    if (job.value == null || _homeWorkerController == null) return false;
+    return _homeWorkerController!.appliedJobIds.contains(job.value!.id);
   }
 
   bool get isWorker {
@@ -29,31 +32,65 @@ class JobDetailController extends GetxController {
   var isLocationPermissionGranted = false.obs;
   var isLoadingLocation = true.obs;
 
+  final ApiClient _apiClient = Get.find<ApiClient>();
+
   @override
   void onInit() {
     super.onInit();
-    job = Get.arguments as OrderModel;
+    final args = Get.arguments;
+
+    if (args is OrderModel) {
+      job.value = args;
+      isLoadingJob.value = false;
+      _calculateDistance();
+    } else if (args is String) {
+      // Deep Link Case: ID passed
+      fetchJobDetail(args);
+    } else {
+      // Fallback/Error case
+      Get.snackbar('Error', 'Data lowongan tidak valid');
+      isLoadingJob.value = false;
+    }
 
     // Try to find HomeWorkerController if it exists
     if (Get.isRegistered<HomeWorkerController>()) {
       _homeWorkerController = Get.find<HomeWorkerController>();
     }
+  }
 
-    _calculateDistance();
+  Future<void> fetchJobDetail(String id) async {
+    try {
+      isLoadingJob.value = true;
+      final response = await _apiClient.dio.get('/orders/$id');
+      if (response.statusCode == 200 && response.data['data'] != null) {
+        job.value = OrderModel.fromJson(response.data['data']);
+        _calculateDistance();
+      } else {
+        Get.snackbar('Error', 'Lowongan tidak ditemukan');
+      }
+    } catch (e) {
+      print('Error fetching job detail: $e');
+      Get.snackbar('Error', 'Gagal memuat lowongan');
+    } finally {
+      isLoadingJob.value = false;
+    }
   }
 
   // ... distance methods ...
 
   void applyJob() {
-    if (_homeWorkerController != null) {
-      _homeWorkerController!.confirmApply(job);
+    if (_homeWorkerController != null && job.value != null) {
+      _homeWorkerController!.confirmApply(job.value!);
     } else {
       Get.snackbar('Error', 'Anda tidak dapat melamar pekerjaan ini');
     }
   }
 
   Future<void> _calculateDistance() async {
-    if (job.latitude == null || job.longitude == null) {
+    final currentJob = job.value;
+    if (currentJob == null ||
+        currentJob.latitude == null ||
+        currentJob.longitude == null) {
       isLoadingLocation.value = false;
       return;
     }
@@ -86,7 +123,7 @@ class JobDetailController extends GetxController {
       final double km = distance.as(
         LengthUnit.Kilometer,
         LatLng(position.latitude, position.longitude),
-        LatLng(job.latitude!, job.longitude!),
+        LatLng(currentJob.latitude!, currentJob.longitude!),
       );
 
       // Handle small distances
@@ -94,7 +131,7 @@ class JobDetailController extends GetxController {
         final double meters = distance.as(
           LengthUnit.Meter,
           LatLng(position.latitude, position.longitude),
-          LatLng(job.latitude!, job.longitude!),
+          LatLng(currentJob.latitude!, currentJob.longitude!),
         );
         distanceText.value = '${meters.round()} m';
       } else {
@@ -108,8 +145,9 @@ class JobDetailController extends GetxController {
   }
 
   Future<void> openMap() async {
-    if (job.mapUrl != null) {
-      final uri = Uri.parse(job.mapUrl!);
+    final currentJob = job.value;
+    if (currentJob != null && currentJob.mapUrl != null) {
+      final uri = Uri.parse(currentJob.mapUrl!);
       try {
         if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
           Get.snackbar('Error', 'Tidak dapat membuka peta');
@@ -121,14 +159,17 @@ class JobDetailController extends GetxController {
   }
 
   Future<void> openWhatsApp() async {
-    if (job.employerPhone == null || job.employerPhone!.isEmpty) {
+    final currentJob = job.value;
+    if (currentJob == null ||
+        currentJob.employerPhone == null ||
+        currentJob.employerPhone!.isEmpty) {
       Get.snackbar('Info', 'Nomor WhatsApp pemberi kerja tidak tersedia');
       return;
     }
 
-    final phone = job.employerPhone!;
+    final phone = currentJob.employerPhone!;
     final url =
-        'https://wa.me/$phone?text=Halo,%20saya%20tertarik%20dengan%20${Uri.encodeComponent(job.title ?? "pekerjaan")}';
+        'https://wa.me/$phone?text=Halo,%20saya%20tertarik%20dengan%20${Uri.encodeComponent(currentJob.title ?? "pekerjaan")}';
 
     try {
       final uri = Uri.parse(url);

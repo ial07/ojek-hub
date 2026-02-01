@@ -65,11 +65,40 @@ export class OrdersController {
   }
 
   /**
-   * Get order by ID (public)
+   * Get order by ID (Restricted)
+   * - Worker/Ojek: Allowed
+   * - Employer: Allowed ONLY if owner
    */
   @Get(":id")
-  async getOrderById(@Param("id") id: string) {
-    return this.ordersService.getOrderById(id);
+  async getOrderById(@Req() req, @Param("id") id: string) {
+    // 1. Authenticate
+    const user = await this.getUserFromRequest(req);
+
+    // 2. Fetch Order
+    const response = await this.ordersService.getOrderById(id);
+    const order = response.data;
+
+    // 3. RBAC Logic
+    // Allow: Workers and Ojek
+    if (user.role === "worker" || user.role === "ojek") {
+      return response;
+    }
+
+    // Allow: Employer (Farmer/Warehouse) IF they are the owner
+    // Note: order.employer might be an object due to join, but employer_id is the FK
+    if (
+      (user.role === "farmer" ||
+        user.role === "petani" ||
+        user.role === "warehouse") &&
+      order.employer_id === user.id
+    ) {
+      return response;
+    }
+
+    // Default: Deny
+    throw new ForbiddenException(
+      "Anda tidak memiliki akses untuk melihat lowongan ini",
+    );
   }
 
   /**

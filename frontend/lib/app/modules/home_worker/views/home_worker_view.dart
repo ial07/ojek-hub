@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/widgets/ojek_button.dart';
 import 'widgets/job_card.dart'; // New Widget
 
 import '../controllers/home_worker_controller.dart';
 import '../../../services/auth_service.dart';
-import '../../../../models/order_model.dart';
 import '../../../routes/app_routes.dart';
 
 class HomeWorkerView extends GetView<HomeWorkerController> {

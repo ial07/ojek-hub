@@ -3,14 +3,9 @@ import '../../../../routes.dart';
 import '../../../../core/api/api_client.dart';
 import '../../../../modules/auth/auth_controller.dart'; // Correct import
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:get_storage/get_storage.dart';
-import 'package:KerjoCurup/app/modules/main/views/main_view.dart';
-import 'package:KerjoCurup/app/modules/main/bindings/main_binding.dart';
 import 'package:KerjoCurup/app/modules/main/views/main_view.dart';
 import 'package:KerjoCurup/app/modules/main/bindings/main_binding.dart';
 
-import 'package:KerjoCurup/app/modules/main/views/main_view.dart';
-import 'package:KerjoCurup/app/modules/main/bindings/main_binding.dart';
 
 class OnboardingController extends GetxController {
   final ApiClient _apiClient = Get.find<ApiClient>();

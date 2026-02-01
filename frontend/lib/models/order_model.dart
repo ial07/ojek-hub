@@ -48,17 +48,21 @@ class OrderModel {
             ? "Lowongan ${json['worker_type']}"
             : "Lowongan Pekerjaan");
     description = json['description'];
-    totalWorkers = json['worker_count'] ?? json['totalWorkers'];
+    totalWorkers =
+        _parseInt(json['worker_count']) ?? _parseInt(json['totalWorkers']);
     // Handle count structure (e.g. from Supabase count query or explicit field)
-    currentQueue = json['current_queue'] ?? json['currentQueue'] ?? 0;
-    acceptedCount = json['accepted_count'] ?? 0;
+    currentQueue = _parseInt(json['current_queue']) ??
+        _parseInt(json['currentQueue']) ??
+        0;
+    acceptedCount = _parseInt(json['accepted_count']) ?? 0;
     status = json['status'];
 
     location = json['location'];
     workerType = json['worker_type'];
     if (json['job_date'] != null) {
-      jobDate = DateTime.tryParse(json['job_date']);
+      jobDate = DateTime.tryParse(json['job_date'].toString());
     }
+
     if (json['created_at'] != null) {
       createdAt = DateTime.tryParse(json['created_at']);
     }
@@ -92,5 +96,12 @@ class OrderModel {
     // We generally don't send employer info back to server this way, but for completeness or caching:
     // data['employer_phone'] = employerPhone;
     return data;
+  }
+
+  static int? _parseInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is String) return int.tryParse(value);
+    return null;
   }
 }
