@@ -164,7 +164,7 @@ class ActivityListCard extends StatelessWidget {
                         _buildMetaRow(
                             Icons.calendar_today_outlined,
                             job?.jobDate != null
-                                ? DateFormat('EEEE, d MMM • HH:mm', 'id_ID')
+                                ? DateFormat('EEEE, d MMM yyyy', 'id_ID')
                                     .format(job!.jobDate!)
                                 : 'Tanggal tidak tersedia'),
                         const SizedBox(height: 4),

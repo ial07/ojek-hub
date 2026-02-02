@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../controllers/activity_controller.dart';
 import '../../../../../models/order_model.dart';
+import 'package:get/get.dart';
+import '../../../../routes/app_routes.dart';
 
 class EmployerActivityCard extends StatelessWidget {
   final ActivityModel activity;
@@ -76,6 +78,52 @@ class EmployerActivityCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                const SizedBox(width: 8),
+                PopupMenuButton<String>(
+                  padding: EdgeInsets.zero,
+                  icon: const Icon(Icons.more_vert,
+                      color: AppColors.textSecondary),
+                  onSelected: (value) async {
+                    if (value == 'edit') {
+                      var result = await Get.toNamed(Routes.CREATE_JOB,
+                          arguments: {'jobId': order.id, 'jobData': order});
+                      if (result == true) {
+                        try {
+                          Get.find<ActivityController>().fetchActivities();
+                        } catch (e) {
+                          print('Failed to refresh activities: $e');
+                        }
+                      }
+                    } else if (value == 'close') {
+                      _handleClose(context);
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit_outlined,
+                              size: 20, color: AppColors.textPrimary),
+                          SizedBox(width: 12),
+                          Text('Edit Lowongan'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'close',
+                      child: Row(
+                        children: [
+                          Icon(Icons.highlight_off,
+                              size: 20, color: Colors.red),
+                          SizedBox(width: 12),
+                          Text('Tutup Lowongan',
+                              style: TextStyle(color: Colors.red)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
 
@@ -136,7 +184,7 @@ class EmployerActivityCard extends StatelessWidget {
             // 4. Footer Note
             Center(
               child: Text(
-                'Kelola pelamar dari menu Lowongan',
+                'Kelola pelamar dari menu Beranda',
                 style: TextStyle(
                   fontSize: 11,
                   fontStyle: FontStyle.italic,
@@ -180,5 +228,97 @@ class EmployerActivityCard extends StatelessWidget {
       default:
         return (status.toUpperCase(), Colors.grey.shade100, Colors.grey);
     }
+  }
+
+  void _handleClose(BuildContext context) {
+    if (activity.relatedOrder == null || activity.relatedOrder?.id == null) {
+      Get.snackbar('Error', 'Data lowongan tidak lengkap');
+      return;
+    }
+
+    final order = activity.relatedOrder!;
+    final controller = Get.find<ActivityController>();
+    final accepted = order.acceptedCount ?? 0;
+    final applicants = order.currentQueue ?? 0;
+
+    // Scenario C: Accepted Worker Exists (Blocking)
+    if (accepted > 0) {
+      Get.defaultDialog(
+        title: 'Lowongan Sedang Berjalan',
+        middleText:
+            'Sudah ada pekerja yang diterima.\nLowongan tidak bisa ditutup sekarang.\n\nSelesaikan atau batalkan pekerjaan terlebih dahulu.',
+        textConfirm: 'Mengerti',
+        confirmTextColor: Colors.white,
+        onConfirm: () => Get.back(),
+        radius: 8,
+      );
+      return;
+    }
+
+    // Scenario A: No applicants
+    if (applicants == 0) {
+      Get.defaultDialog(
+        title: 'Tutup Lowongan',
+        middleText:
+            'Belum ada pelamar pada lowongan ini.\nApakah kamu yakin ingin menutup lowongan?',
+        textConfirm: 'Tutup Lowongan',
+        textCancel: 'Batal',
+        confirmTextColor: Colors.white,
+        buttonColor: Colors.red,
+        onConfirm: () {
+          Get.back(); // close dialog
+          controller.closeJob(order.id!);
+        },
+        radius: 8,
+      );
+      return;
+    }
+
+    // Scenario B: Applicants Exist, None Accepted
+    Get.defaultDialog(
+      title: 'Tidak Bisa Langsung Ditutup',
+      radius: 8,
+      content: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            const Text(
+              'Lowongan ini sudah memiliki pelamar.\nLowongan tidak bisa ditutup tanpa keputusan.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+            ),
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Get.back(); // close dialog
+                  controller.rejectAllAndClose(order.id!);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text('Tolak Semua Pelamar dan Tutup',
+                    style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () {
+                Get.back();
+                Get.toNamed(Routes.EMPLOYER_ACTIVITY_DETAIL,
+                    arguments: {'activityId': activity.id});
+              },
+              child: const Text('Pilih Pelamar Sekarang'),
+            )
+          ],
+        ),
+      ),
+    );
   }
 }

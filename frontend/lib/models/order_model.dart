@@ -78,10 +78,17 @@ class OrderModel {
     longitude = (json['longitude'] as num?)?.toDouble();
     mapUrl = json['map_url'];
 
+    // Parse employer data (join from backend)
     if (json['employer'] != null) {
-      employerPhone = json['employer']['phone'];
+      employerPhone = json['employer']['phone'] ??
+          json['employer']
+              ['whatsapp_number']; // Backend now sends whatsapp_number
       employerName = json['employer']['name'];
+      employerPhotoUrl = json['employer']['photo_url'];
     }
+
+    // Parse application status (worker-specific data injected by backend)
+    applicationStatus = json['application_status'];
   }
 
   Map<String, dynamic> toJson() {

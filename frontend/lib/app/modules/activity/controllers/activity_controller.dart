@@ -2,6 +2,9 @@ import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../models/order_model.dart'; // Import OrderModel
+import '../../../../core/api/api_client.dart';
+import '../../../../core/theme/app_colors.dart';
+import 'package:dio/dio.dart';
 
 class ActivityModel {
   final String id;
@@ -25,6 +28,7 @@ class ActivityModel {
 
 class ActivityController extends GetxController {
   final SupabaseClient _supabase = Supabase.instance.client;
+  final ApiClient _apiClient = Get.find<ApiClient>();
   final box = GetStorage();
 
   var isLoading = false.obs;
@@ -275,4 +279,60 @@ class ActivityController extends GetxController {
   }
 
   bool get isEmployer => role != 'worker';
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Close Job Actions
+  // ──────────────────────────────────────────────────────────────────────────
+
+  Future<void> closeJob(String orderId) async {
+    try {
+      isLoading.value = true;
+      await _apiClient.dio.patch('/orders/$orderId/close');
+      Get.back(); // Close dialog
+      Get.snackbar('Sukses', 'Lowongan berhasil ditutup',
+          backgroundColor: AppColors.pastelGreen,
+          colorText: AppColors.pastelGreenText);
+      fetchActivities(); // Refresh list
+    } catch (e) {
+      print('[ACTIVITY] Close Job Error: $e');
+      String msg = 'Gagal menutup lowongan';
+      if (e is DioException && e.response?.data != null) {
+        final data = e.response!.data;
+        if (data is Map) {
+          msg = data['message'] ?? data['pesan'] ?? msg;
+        }
+      }
+      Get.snackbar('Error', msg,
+          backgroundColor: AppColors.pastelRed,
+          colorText: AppColors.pastelRedText);
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> rejectAllAndClose(String orderId) async {
+    try {
+      isLoading.value = true;
+      await _apiClient.dio.post('/orders/$orderId/reject-all');
+      Get.back(); // Close dialog
+      Get.snackbar('Sukses', 'Semua pelamar ditolak dan lowongan ditutup',
+          backgroundColor: AppColors.pastelGreen,
+          colorText: AppColors.pastelGreenText);
+      fetchActivities(); // Refresh list
+    } catch (e) {
+      print('[ACTIVITY] Reject All Error: $e');
+      String msg = 'Gagal memproses permintaan';
+      if (e is DioException && e.response?.data != null) {
+        final data = e.response!.data;
+        if (data is Map) {
+          msg = data['message'] ?? data['pesan'] ?? msg;
+        }
+      }
+      Get.snackbar('Error', msg,
+          backgroundColor: AppColors.pastelRed,
+          colorText: AppColors.pastelRedText);
+    } finally {
+      isLoading.value = false;
+    }
+  }
 }

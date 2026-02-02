@@ -12,6 +12,10 @@ class CreateJobController extends GetxController {
 
   final formKey = GlobalKey<FormState>();
 
+  // Edit Mode State
+  var isEditMode = false.obs;
+  String? editingJobId;
+
   // State flags
   var isLoading = false.obs;
   var isReady = false.obs;
@@ -33,28 +37,6 @@ class CreateJobController extends GetxController {
         'https://www.google.com/maps?q=${loc.latitude},${loc.longitude}';
     print('[CREATE_JOB] Location selected: ${loc.latitude}, ${loc.longitude}');
     print('[CREATE_JOB] Map URL: ${mapUrl.value}');
-  }
-
-  @override
-  void onInit() {
-    super.onInit();
-    _initialize();
-  }
-
-  void _initialize() {
-    print('[CREATE_JOB] Initializing...');
-
-    // Check session
-    final session = _supabase.auth.currentSession;
-    if (session == null) {
-      print('[CREATE_JOB] No session, blocking');
-      Get.snackbar('Error', 'Sesi tidak valid');
-      Get.back();
-      return;
-    }
-
-    isReady.value = true;
-    print('[CREATE_JOB] Ready');
   }
 
   void setWorkerType(String? val) {
@@ -89,61 +71,145 @@ class CreateJobController extends GetxController {
     }
   }
 
+  @override
+  void onInit() {
+    super.onInit();
+    _initialize();
+  }
+
+  void _initialize() {
+    print('[CREATE_JOB] Initializing...');
+
+    // Check session
+    final session = _supabase.auth.currentSession;
+    if (session == null) {
+      print('[CREATE_JOB] No session, blocking');
+      Get.snackbar('Error', 'Sesi tidak valid');
+      Get.back();
+      return;
+    }
+
+    // Check Edit Mode
+    if (Get.arguments != null && Get.arguments is Map) {
+      final args = Get.arguments as Map;
+      if (args['jobId'] != null && args['jobData'] != null) {
+        isEditMode.value = true;
+        editingJobId = args['jobId'];
+        _prefillData(args['jobData']);
+      }
+    }
+
+    isReady.value = true;
+    print('[CREATE_JOB] Ready. Mode: ${isEditMode.value ? "EDIT" : "CREATE"}');
+  }
+
+  void _prefillData(dynamic jobData) {
+    try {
+      // Assuming jobData is an OrderModel or Map
+      // If passing OrderModel, ensure casting.
+      // For now, I'll rely on Map key access or dynamic
+      // Adjust based on your calling code.
+      // Using dynamic to handle both Map and Model if needed, but best to use Model.
+
+      /*
+      Field mapping:
+      workerType -> jobData.workerType
+      workerCount -> jobData.totalWorkers (or workerCount)
+      description -> jobData.description
+      location -> jobData.location
+      date -> jobData.jobDate
+      latitude/longitude -> jobData.latitude, jobData.longitude
+      */
+
+      // Simple implementation assuming OrderModel getters work dynamically or it's a model class
+      // To be safe, let's treat it as the OrderModel class we know.
+      // But simpler to just read fields.
+
+      workerType.value = jobData.workerType == 'harian' ? 'harian' : 'ojek';
+      workerCount.value = jobData.totalWorkers ?? 1;
+
+      descriptionController.text = jobData.description ?? '';
+      locationController.text = jobData.location ?? '';
+
+      if (jobData.jobDate != null) {
+        selectedDate = jobData.jobDate;
+        dateController.text =
+            "${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}";
+      }
+
+      if (jobData.latitude != null && jobData.longitude != null) {
+        setLocation(LatLng(jobData.latitude!, jobData.longitude!));
+      }
+    } catch (e) {
+      print('[CREATE_JOB] Error prefilling data: $e');
+    }
+  }
+
+  // ... (setWorkerType, setWorkerCount, pickDate etc. remain)
+
   Future<void> submitOrder() async {
     // Guard: not ready
     if (!isReady.value) {
-      print('[CREATE_JOB] Not ready, blocking submit');
       return;
     }
 
     // Guard: already loading
     if (isLoading.value) {
-      print('[CREATE_JOB] Already loading, blocking submit');
       return;
     }
 
     // Guard: form validation
     if (formKey.currentState == null || !formKey.currentState!.validate()) {
-      print('[CREATE_JOB] Form validation failed');
       return;
     }
 
     // Guard: date required
     if (selectedDate == null) {
-      print('[CREATE_JOB] No date selected');
       Get.snackbar('Error', 'Pilih tanggal pekerjaan');
       return;
     }
 
     // Guard: map location required
     if (selectedLocation.value == null) {
-      print('[CREATE_JOB] No map location selected');
       Get.snackbar('Error', 'Pilih titik lokasi di peta');
       return;
     }
 
     try {
       isLoading.value = true;
-      print('[CREATE_JOB] Submitting order...');
+      print(
+          '[CREATE_JOB] Submitting ${isEditMode.value ? "UPDATE" : "CREATE"}...');
 
-      final response = await _apiClient.dio.post('/orders', data: {
+      final payload = {
         'workerType': workerType.value,
         'workerCount': workerCount.value,
         'description': descriptionController.text,
-        'location': locationController.text, // Text address
+        'location': locationController.text,
         'jobDate':
             selectedDate?.toIso8601String() ?? DateTime.now().toIso8601String(),
         'latitude': selectedLocation.value!.latitude,
         'longitude': selectedLocation.value!.longitude,
         'mapUrl': mapUrl.value,
-      });
+      };
+
+      var response;
+      if (isEditMode.value && editingJobId != null) {
+        // UPDATE
+        response =
+            await _apiClient.dio.put('/orders/$editingJobId', data: payload);
+      } else {
+        // CREATE
+        response = await _apiClient.dio.post('/orders', data: payload);
+      }
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print('[CREATE_JOB] Order created successfully');
-        Get.back(result: true);
+        print('[CREATE_JOB] Operation successful');
+        Get.back(result: true); // Return true to trigger refresh
         Get.snackbar(
           'Sukses',
-          'Lowongan berhasil dibuat',
+          isEditMode.value
+              ? 'Lowongan berhasil diperbarui'
+              : 'Lowongan berhasil dibuat',
           backgroundColor: AppColors.pastelGreen,
           colorText: AppColors.pastelGreenText,
         );
@@ -151,7 +217,7 @@ class CreateJobController extends GetxController {
     } catch (e) {
       print('[CREATE_JOB] Submit error: $e');
 
-      String errorMessage = 'Terjadi kesalahan saat membuat lowongan';
+      String errorMessage = 'Terjadi kesalahan';
 
       if (e is DioException) {
         if (e.response?.data != null) {

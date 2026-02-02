@@ -63,8 +63,33 @@ class JobDetailController extends GetxController {
     try {
       isLoadingJob.value = true;
       final response = await _apiClient.dio.get('/orders/$id');
+
+      // DEBUG: Log raw response
+      print('━━━ [JobDetailController] Raw API Response ━━━');
+      print('Status Code: ${response.statusCode}');
+      print('Response Data: ${response.data}');
+
       if (response.statusCode == 200 && response.data['data'] != null) {
-        job.value = OrderModel.fromJson(response.data['data']);
+        final rawData = response.data['data'];
+
+        // DEBUG: Log critical fields
+        print('━━━ [JobDetailController] Parsing Critical Fields ━━━');
+        print('application_status: ${rawData['application_status']}');
+        print('employer.phone: ${rawData['employer']?['phone']}');
+        print(
+            'employer.whatsapp_number: ${rawData['employer']?['whatsapp_number']}');
+        print('employer.photo_url: ${rawData['employer']?['photo_url']}');
+
+        job.value = OrderModel.fromJson(rawData);
+
+        // DEBUG: Log parsed model
+        print('━━━ [JobDetailController] Parsed Model ━━━');
+        print('Model applicationStatus: ${job.value?.applicationStatus}');
+        print('Model employerPhone: ${job.value?.employerPhone}');
+        print('Model employerName: ${job.value?.employerName}');
+        print('Model employerPhotoUrl: ${job.value?.employerPhotoUrl}');
+        print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
         _calculateDistance();
       } else {
         Get.snackbar('Error', 'Lowongan tidak ditemukan');

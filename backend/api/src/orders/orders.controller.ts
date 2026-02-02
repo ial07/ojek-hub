@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
   Put,
   Delete,
   Body,
@@ -85,8 +86,12 @@ export class OrdersController {
     // 1. Authenticate
     const user = await this.getUserFromRequest(req);
 
-    // 2. Fetch Order (Pass viewer ID for context)
-    const response = await this.ordersService.getOrderById(id, user.id);
+    // 2. Fetch Order (Pass viewer ID and Role for context)
+    const response = await this.ordersService.getOrderById(
+      id,
+      user.id,
+      user.role,
+    );
     const order = response.data;
 
     // 3. RBAC Logic
@@ -167,5 +172,35 @@ export class OrdersController {
   ) {
     const user = await this.getUserFromRequest(req);
     return this.ordersService.acceptApplication(user.id, orderId, workerId);
+  }
+
+  /**
+   * Close a job (only possible if no accepted workers)
+   */
+  @Patch(":id/close")
+  async closeOrder(@Req() req, @Param("id") id: string) {
+    const user = await this.getUserFromRequest(req);
+    // Role check
+    await this.usersService.checkRole(user.id, [
+      "farmer",
+      "petani",
+      "warehouse",
+    ]);
+    return this.ordersService.closeOrder(user.id, id);
+  }
+
+  /**
+   * Reject all applicants and close job
+   */
+  @Post(":id/reject-all")
+  async rejectAllAndClose(@Req() req, @Param("id") id: string) {
+    const user = await this.getUserFromRequest(req);
+    // Role check
+    await this.usersService.checkRole(user.id, [
+      "farmer",
+      "petani",
+      "warehouse",
+    ]);
+    return this.ordersService.rejectAllAndClose(user.id, id);
   }
 }

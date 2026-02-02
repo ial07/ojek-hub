@@ -32,8 +32,9 @@ class JobDetailView extends GetView<JobDetailController> {
         }
 
         final bool hasApplied = controller.isApplied; // Reactive
+        // TEMPORARY: Reset status logic for stable UI
         final String status =
-            job.applicationStatus ?? (hasApplied ? 'pending' : 'open');
+            'open'; // job.applicationStatus ?? (hasApplied ? 'pending' : 'open');
         final String statusLabel = hasApplied
             ? (status == 'accepted'
                 ? 'Diterima'
@@ -51,23 +52,16 @@ class JobDetailView extends GetView<JobDetailController> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-              color: statusColor.withValues(alpha: 0.1),
+              color: const Color(0xFFF5F5F5), // Neutral background
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    '${job.workerType?.toUpperCase() ?? "PEKERJA"}  •  ${job.jobDate != null ? DateFormat('d MMM').format(job.jobDate!) : "N/A"}  •  ',
+                    '${job.workerType?.toUpperCase() ?? "PEKERJA"}  •  ${job.jobDate != null ? DateFormat('d MMM').format(job.jobDate!) : "N/A"}',
                     style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: AppColors.textSecondary),
-                  ),
-                  Text(
-                    statusLabel.toUpperCase(),
-                    style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: statusColor),
                   ),
                 ],
               ),
@@ -147,86 +141,10 @@ class JobDetailView extends GetView<JobDetailController> {
                     const SizedBox(height: 24),
 
                     // 1.5 Contact Card (New High-Attention Zone)
-                    if (controller.isWorker) ...[
-                      if (job.employerPhone != null)
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                                color: Colors.green.withValues(alpha: 0.3)),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Hubungi Penyedia Kerja',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.primaryBlack,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              const Text(
-                                'Punya pertanyaan? Hubungi penyedia kerja langsung via WhatsApp.',
-                                style: TextStyle(
-                                    fontSize: 13,
-                                    color: AppColors.textSecondary),
-                              ),
-                              const SizedBox(height: 12),
-                              SizedBox(
-                                width: double.infinity,
-                                child: ElevatedButton.icon(
-                                  onPressed: controller.openWhatsAppInquiry,
-                                  icon: const Icon(Icons.chat,
-                                      color: Colors.white),
-                                  label: const Text('Chat WhatsApp'),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.primaryGreen,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 12),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    elevation: 0,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      else
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: Colors.grey.shade50,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.grey.shade200),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(Icons.info_outline,
-                                  color: Colors.grey.shade400, size: 20),
-                              const SizedBox(width: 12),
-                              const Expanded(
-                                child: Text(
-                                  'Penyedia kerja belum mencantumkan nomor WhatsApp.',
-                                  style: TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 13,
-                                      fontStyle: FontStyle.italic),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      const SizedBox(height: 24),
-                    ],
+                    // TEMPORARY: Contact Card removed for workers
+                    /* 
+                    if (controller.isWorker) ...[...]
+                    */
                     const SizedBox(height: 24),
 
                     // 2. Job Title & Role Context
@@ -369,30 +287,12 @@ class JobDetailView extends GetView<JobDetailController> {
                   children: [
                     // Sticky Chat Action (Stacked Top)
                     // Visible for Workers if Phone exists, unless Status is 'accepted' (covered by primary button)
+                    // TEMPORARY: Sticky Chat Action removed
+                    /*
                     if (controller.isWorker &&
                         job.employerPhone != null &&
-                        status != 'accepted') ...[
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton.icon(
-                          onPressed: controller.openWhatsAppInquiry,
-                          icon: const Icon(Icons.chat_bubble_outline,
-                              size: 18, color: AppColors.primaryGreen),
-                          label: const Text('Chat Penyedia',
-                              style: TextStyle(
-                                  color: AppColors.primaryGreen,
-                                  fontWeight: FontWeight.bold)),
-                          style: OutlinedButton.styleFrom(
-                            side:
-                                const BorderSide(color: AppColors.primaryGreen),
-                            shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12)),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
+                        status != 'accepted') ...[...]
+                    */
 
                     // Primary State Actions (Stacked Bottom)
                     if (status == 'accepted' && job.employerPhone != null)

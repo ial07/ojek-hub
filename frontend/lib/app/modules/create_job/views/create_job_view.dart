@@ -15,8 +15,8 @@ class CreateJobView extends GetView<CreateJobController> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.scaffoldBackground,
-      appBar: const OjekHeader(
-        title: 'Buat Lowongan',
+      appBar: OjekHeader(
+        title: controller.isEditMode.value ? 'Edit Lowongan' : 'Buat Lowongan',
         showBack: true,
       ),
       body: Column(
@@ -191,8 +191,12 @@ class CreateJobView extends GetView<CreateJobController> {
               ],
             ),
             child: Obx(() => OjekButton(
-                  text: 'Posting Lowongan',
-                  icon: Icons.send_rounded,
+                  text: controller.isEditMode.value
+                      ? 'Simpan Perubahan'
+                      : 'Posting Lowongan',
+                  icon: controller.isEditMode.value
+                      ? Icons.save_rounded
+                      : Icons.send_rounded,
                   isLoading: controller.isLoading.value,
                   onPressed: controller.submitOrder,
                 )),
