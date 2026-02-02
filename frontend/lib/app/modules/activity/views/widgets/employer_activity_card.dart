@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../controllers/activity_controller.dart';
 import '../../../../../models/order_model.dart';
-import '../../../../routes/app_routes.dart';
 
 class EmployerActivityCard extends StatelessWidget {
   final ActivityModel activity;
 
   const EmployerActivityCard({super.key, required this.activity});
 
+  @override
   @override
   Widget build(BuildContext context) {
     final OrderModel? order = activity.relatedOrder;
@@ -39,13 +38,13 @@ class EmployerActivityCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 1. Header (Title & Status)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            child: Row(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. Header (Title & Status)
+            Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
@@ -79,151 +78,91 @@ class EmployerActivityCard extends StatelessWidget {
                 ),
               ],
             ),
-          ),
 
-          const Divider(height: 1, color: AppColors.borderLight),
+            const SizedBox(height: 12),
+            const Divider(height: 1, color: AppColors.borderLight),
+            const SizedBox(height: 12),
 
-          // 2. Body (Meta & Stats)
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                // Meta Row
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildInfoItem(
-                        Icons.calendar_today_outlined,
-                        order.jobDate != null
-                            ? DateFormat('d MMM yyyy').format(order.jobDate!)
-                            : 'N/A',
-                      ),
+            // 2. Middle Section (Jadwal, Lokasi, Kebutuhan)
+            _buildInfoRow(
+                Icons.calendar_today_outlined,
+                order.jobDate != null
+                    ? DateFormat('EEEE, d MMM yyyy', 'id_ID')
+                        .format(order.jobDate!)
+                    : 'Jadwal belum diatur'),
+            const SizedBox(height: 8),
+            _buildInfoRow(Icons.location_on_outlined,
+                order.location ?? 'Lokasi tidak tersedia'),
+            const SizedBox(height: 8),
+            _buildInfoRow(Icons.people_outline, 'Dibutuhkan $quota orang'),
+
+            const SizedBox(height: 16),
+
+            // 3. Progress Row (Text Stats)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Pelamar: $applicants orang',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey.shade700,
                     ),
-                    Expanded(
-                      child: _buildInfoItem(
-                        Icons.location_on_outlined,
-                        order.location ?? 'Lokasi tidak tersedia',
-                      ),
+                  ),
+                  Text(
+                    'Diterima: $accepted / $quota',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: accepted >= quota
+                          ? AppColors.primaryGreen
+                          : Colors.grey.shade700,
                     ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // Stats Row (Pelamar vs Diterima)
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey.shade200),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildStatItem(
-                          'Pelamar', '$applicants', Icons.people_outline),
-                      Container(
-                          height: 24, width: 1, color: Colors.grey.shade300),
-                      _buildStatItem('Diterima', '$accepted / $quota',
-                          Icons.check_circle_outline,
-                          isHighlight: accepted >= quota),
-                    ],
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
 
-          // 3. Actions
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () {
-                      Get.toNamed(Routes.EMPLOYER_ACTIVITY_DETAIL,
-                          arguments: order);
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.textSecondary,
-                      side: BorderSide(color: Colors.grey.shade300),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: const Text('Detail'),
-                  ),
+            const SizedBox(height: 12),
+
+            // 4. Footer Note
+            Center(
+              child: Text(
+                'Kelola pelamar dari menu Lowongan',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.grey.shade400,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // Direct to Detail for now, maybe with flag to open applicants tab if we had tabs
-                      Get.toNamed(Routes.EMPLOYER_ACTIVITY_DETAIL,
-                          arguments: order);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryGreen,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                    ),
-                    child: const Text('Lihat Pelamar'),
-                  ),
-                ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildInfoItem(IconData icon, String text) {
+  Widget _buildInfoRow(IconData icon, String text) {
     return Row(
       children: [
         Icon(icon, size: 14, color: AppColors.textSecondary),
-        const SizedBox(width: 6),
+        const SizedBox(width: 8),
         Expanded(
           child: Text(
             text,
-            style:
-                const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            style: const TextStyle(fontSize: 13, color: AppColors.textPrimary),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
         ),
-      ],
-    );
-  }
-
-  Widget _buildStatItem(String label, String value, IconData icon,
-      {bool isHighlight = false}) {
-    return Column(
-      children: [
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon,
-                size: 14,
-                color: isHighlight ? AppColors.primaryGreen : Colors.grey),
-            const SizedBox(width: 4),
-            Text(value,
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    color: isHighlight
-                        ? AppColors.primaryGreen
-                        : AppColors.textPrimary)),
-          ],
-        ),
-        const SizedBox(height: 2),
-        Text(label,
-            style:
-                const TextStyle(fontSize: 11, color: AppColors.textSecondary)),
       ],
     );
   }
@@ -235,7 +174,7 @@ class EmployerActivityCard extends StatelessWidget {
     }
     switch (status.toLowerCase()) {
       case 'open':
-        return ('Tersedia', const Color(0xFFE3F2FD), Colors.blue);
+        return ('Terbuka', const Color(0xFFE3F2FD), Colors.blue);
       case 'closed':
         return ('Ditutup', const Color(0xFFFFEBEE), Colors.red);
       default:

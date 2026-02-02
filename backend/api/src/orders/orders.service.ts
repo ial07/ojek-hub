@@ -138,7 +138,7 @@ export class OrdersService {
   async getMyOrders(userId: string) {
     const { data, error } = await this.supabase
       .from("orders")
-      .select("*, order_applications(count)")
+      .select("*")
       .eq("employer_id", userId)
       .order("created_at", { ascending: false });
 
@@ -146,16 +146,33 @@ export class OrdersService {
       throw new BadRequestException("Gagal mengambil data lowongan saya");
     }
 
-    // Transform data to include current_queue from count
-    const transformedData = data?.map((order) => ({
-      ...order,
-      worker_type: order.worker_type === "daily" ? "harian" : order.worker_type,
-      current_queue: order.order_applications?.[0]?.count ?? 0,
-      // Remove the nested structure to keep response clean
-      order_applications: undefined,
-    }));
+    // Enrich with counts
+    const enrichedData = await Promise.all(
+      (data ?? []).map(async (order) => {
+        // 1. Total Applicants
+        const { count: totalApps } = await this.supabase
+          .from("order_applications")
+          .select("*", { count: "exact", head: true })
+          .eq("order_id", order.id);
 
-    return { status: "success", data: transformedData };
+        // 2. Accepted Applicants
+        const { count: acceptedApps } = await this.supabase
+          .from("order_applications")
+          .select("*", { count: "exact", head: true })
+          .eq("order_id", order.id)
+          .eq("status", "accepted");
+
+        return {
+          ...order,
+          worker_type:
+            order.worker_type === "daily" ? "harian" : order.worker_type,
+          current_queue: totalApps ?? 0,
+          accepted_count: acceptedApps ?? 0,
+        };
+      }),
+    );
+
+    return { status: "success", data: enrichedData };
   }
 
   async getOrderById(id: string) {
