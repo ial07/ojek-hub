@@ -129,7 +129,7 @@ class JobDetailView extends GetView<JobDetailController> {
                                 ),
                                 const SizedBox(height: 4),
                                 if (job.employerPhone != null)
-                                  Text(
+                                  const Text(
                                     'Terverifikasi', // Placeholder trust signal
                                     style: TextStyle(
                                         color: AppColors.primaryGreen,
@@ -139,9 +139,94 @@ class JobDetailView extends GetView<JobDetailController> {
                               ],
                             ),
                           ),
+                          // (Button removed)
                         ],
                       ),
                     ),
+
+                    const SizedBox(height: 24),
+
+                    // 1.5 Contact Card (New High-Attention Zone)
+                    if (controller.isWorker) ...[
+                      if (job.employerPhone != null)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                                color: Colors.green.withValues(alpha: 0.3)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Hubungi Penyedia Kerja',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primaryBlack,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              const Text(
+                                'Punya pertanyaan? Hubungi penyedia kerja langsung via WhatsApp.',
+                                style: TextStyle(
+                                    fontSize: 13,
+                                    color: AppColors.textSecondary),
+                              ),
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: controller.openWhatsAppInquiry,
+                                  icon: const Icon(Icons.chat,
+                                      color: Colors.white),
+                                  label: const Text('Chat WhatsApp'),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primaryGreen,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 12),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    elevation: 0,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      else
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade50,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.info_outline,
+                                  color: Colors.grey.shade400, size: 20),
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                child: Text(
+                                  'Penyedia kerja belum mencantumkan nomor WhatsApp.',
+                                  style: TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 13,
+                                      fontStyle: FontStyle.italic),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      const SizedBox(height: 24),
+                    ],
                     const SizedBox(height: 24),
 
                     // 2. Job Title & Role Context
@@ -282,11 +367,34 @@ class JobDetailView extends GetView<JobDetailController> {
               child: SafeArea(
                 child: Column(
                   children: [
-                    // Action Logic:
-                    // 1. If Accepted -> Contact Provider (Primary)
-                    // 2. If Pending -> Cancel (Danger/Outline) - *Cancel not imp yet*, so show Disable/Waiting
-                    // 3. If Not Applied -> Apply (Primary)
+                    // Sticky Chat Action (Stacked Top)
+                    // Visible for Workers if Phone exists, unless Status is 'accepted' (covered by primary button)
+                    if (controller.isWorker &&
+                        job.employerPhone != null &&
+                        status != 'accepted') ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: controller.openWhatsAppInquiry,
+                          icon: const Icon(Icons.chat_bubble_outline,
+                              size: 18, color: AppColors.primaryGreen),
+                          label: const Text('Chat Penyedia',
+                              style: TextStyle(
+                                  color: AppColors.primaryGreen,
+                                  fontWeight: FontWeight.bold)),
+                          style: OutlinedButton.styleFrom(
+                            side:
+                                const BorderSide(color: AppColors.primaryGreen),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
 
+                    // Primary State Actions (Stacked Bottom)
                     if (status == 'accepted' && job.employerPhone != null)
                       SizedBox(
                         width: double.infinity,
@@ -304,7 +412,6 @@ class JobDetailView extends GetView<JobDetailController> {
                         ),
                       )
                     else if (hasApplied && status == 'pending')
-                      // "Batalkan" not implemented backend-side yet, so show Status
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -318,7 +425,6 @@ class JobDetailView extends GetView<JobDetailController> {
                                     fontWeight: FontWeight.bold))),
                       )
                     else if (hasApplied)
-                      // Rejected/etc
                       SizedBox(
                         width: double.infinity,
                         child: OutlinedButton(

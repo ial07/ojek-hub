@@ -71,7 +71,7 @@ export class OrdersController {
   async getActivities(@Req() req) {
     const user = await this.getUserFromRequest(req);
     // Role check optional but good practice
-    // await this.usersService.checkRole(user.id, ["worker"]); 
+    // await this.usersService.checkRole(user.id, ["worker"]);
     return this.ordersService.getAppliedJobs(user.id);
   }
 
@@ -85,8 +85,8 @@ export class OrdersController {
     // 1. Authenticate
     const user = await this.getUserFromRequest(req);
 
-    // 2. Fetch Order
-    const response = await this.ordersService.getOrderById(id);
+    // 2. Fetch Order (Pass viewer ID for context)
+    const response = await this.ordersService.getOrderById(id, user.id);
     const order = response.data;
 
     // 3. RBAC Logic

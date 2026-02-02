@@ -175,10 +175,10 @@ export class OrdersService {
     return { status: "success", data: enrichedData };
   }
 
-  async getOrderById(id: string) {
+  async getOrderById(id: string, viewerId?: string) {
     const { data, error } = await this.supabase
       .from("orders")
-      .select("*, employer:users(name, phone)")
+      .select("*, employer:users(name, phone, photo_url)") // Added photo_url and ensured phone
       .eq("id", id)
       .single();
 
@@ -186,9 +186,46 @@ export class OrdersService {
       throw new NotFoundException("Lowongan tidak ditemukan");
     }
 
-    // Transform
+    // Transform Worker Type
     if (data.worker_type === "daily") {
       data.worker_type = "harian";
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Mapping: Expose WhatsApp Number
+    // ──────────────────────────────────────────────────────────────────────────
+    if (data.employer) {
+      // Map phone to whatsapp_number as requested
+      // We assume the DB column 'phone' stores the number.
+      // If a distinct 'whatsapp_number' column exists, add it to select above.
+      data.employer.whatsapp_number = data.employer.phone;
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Context: Inject Viewer's Application Status (If Worker)
+    // ──────────────────────────────────────────────────────────────────────────
+    if (viewerId) {
+      const { data: application } = await this.supabase
+        .from("order_applications")
+        .select("status")
+        .eq("order_id", id)
+        .eq("worker_id", viewerId)
+        .maybeSingle();
+
+      if (application) {
+        // Inject application status
+        data.application_status = application.status; // e.g., 'pending', 'accepted'
+
+        // OPTIONAL: Override global status for the viewer?
+        // User said: "return my_application.status... Do not rely on global order status"
+        // We will strictly return it as a separate field 'application_status' for clarity,
+        // unless frontend strictly binds to 'status'.
+        // Best practice: Keep 'status' as order status (open/filled), add 'application_status' (accepted).
+        // But to ensure "Waiting for Confirmation" (pending) logic works, we ensure this field is present.
+      } else {
+        // Not applied yet
+        data.application_status = null;
+      }
     }
 
     return { status: "success", data };

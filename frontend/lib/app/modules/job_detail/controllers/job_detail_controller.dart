@@ -168,7 +168,8 @@ class JobDetailController extends GetxController {
       return;
     }
 
-    final phone = currentJob.employerPhone!;
+    final phone = _normalizePhone(currentJob.employerPhone!);
+    // Pre-filled message for "Hubungi Penyedia" (Accepted candidates)
     final url =
         'https://wa.me/$phone?text=Halo,%20saya%20tertarik%20dengan%20${Uri.encodeComponent(currentJob.title ?? "pekerjaan")}';
 
@@ -180,5 +181,41 @@ class JobDetailController extends GetxController {
     } catch (e) {
       Get.snackbar('Error', 'Gagal membuka WhatsApp');
     }
+  }
+
+  Future<void> openWhatsAppInquiry() async {
+    final currentJob = job.value;
+    if (currentJob == null ||
+        currentJob.employerPhone == null ||
+        currentJob.employerPhone!.isEmpty) {
+      Get.snackbar('Info', 'Nomor WhatsApp pemberi kerja tidak tersedia');
+      return;
+    }
+
+    final phone = _normalizePhone(currentJob.employerPhone!);
+    // Specific message for "Chat via WhatsApp" (Inquiry)
+    final message =
+        'Hello, saya mau bertanya terkait ${currentJob.title ?? "lowongan ini"}';
+    final url = 'https://wa.me/$phone?text=${Uri.encodeComponent(message)}';
+
+    try {
+      final uri = Uri.parse(url);
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        Get.snackbar('Error', 'Tidak dapat membuka WhatsApp');
+      }
+    } catch (e) {
+      Get.snackbar('Error', 'Gagal membuka WhatsApp');
+    }
+  }
+
+  String _normalizePhone(String phone) {
+    String p = phone.replaceAll(RegExp(r'\D'), ''); // Remove non-digits
+    if (p.startsWith('0')) {
+      return '62${p.substring(1)}';
+    }
+    if (p.startsWith('8')) {
+      return '62$p';
+    }
+    return p;
   }
 }

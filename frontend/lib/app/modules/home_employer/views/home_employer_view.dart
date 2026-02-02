@@ -58,18 +58,6 @@ class HomeEmployerView extends GetView<HomeEmployerController> {
                     ),
                   ),
 
-                // Temporary Debug Header (Requested by Design Audit)
-                Container(
-                  width: double.infinity,
-                  color: Colors.yellow.shade100,
-                  padding: const EdgeInsets.all(4),
-                  child: Text(
-                    controller.debugStats,
-                    style: const TextStyle(fontSize: 10, color: Colors.brown),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-
                 // Section 1: Active & Upcoming (Sedang Berjalan)
                 if (controller.activeOrders.isNotEmpty) ...[
                   _buildSectionTitle('Sedang Berjalan & Akan Datang'),
