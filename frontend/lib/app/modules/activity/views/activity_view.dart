@@ -3,23 +3,30 @@ import 'package:get/get.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../controllers/activity_controller.dart';
 import 'widgets/activity_list_card.dart';
+import 'widgets/employer_activity_card.dart';
 
 class ActivityView extends GetView<ActivityController> {
   const ActivityView({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // Check role from controller getter logic (reactive-ish if rebuild occurs, but role is static per session mostly)
+    final bool isEmployer = controller.isEmployer;
+
     return Scaffold(
       backgroundColor: AppColors.scaffoldBackground,
       appBar: AppBar(
-        title: const Column(
+        title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Aktivitas Saya',
-                style: TextStyle(fontWeight: FontWeight.bold)),
+            Text(isEmployer ? 'Lowongan Saya' : 'Aktivitas Saya',
+                style: const TextStyle(fontWeight: FontWeight.bold)),
             Text(
-              'Pantau semua lamaran dan pekerjaanmu',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
+              isEmployer
+                  ? 'Pantau lamaran masuk'
+                  : 'Pantau semua lamaran dan pekerjaanmu',
+              style:
+                  const TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
             ),
           ],
         ),
@@ -46,10 +53,26 @@ class ActivityView extends GetView<ActivityController> {
 
         // Check overall emptiness
         if (controller.activities.isEmpty) {
-          return _buildGlobalEmptyState();
+          return _buildGlobalEmptyState(isEmployer);
         }
 
-        // Build Timeline
+        // EMPLOYER UI: Flat List
+        if (isEmployer) {
+          return RefreshIndicator(
+            onRefresh: controller.fetchActivities,
+            color: AppColors.primaryGreen,
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: controller.activities.length,
+              itemBuilder: (context, index) {
+                final activity = controller.activities[index];
+                return EmployerActivityCard(activity: activity);
+              },
+            ),
+          );
+        }
+
+        // WORKER UI: Timeline Sections
         return RefreshIndicator(
           onRefresh: controller.fetchActivities,
           color: AppColors.primaryGreen,
@@ -63,9 +86,6 @@ class ActivityView extends GetView<ActivityController> {
                 ...controller.todayActivities.map(
                     (a) => ActivityListCard(activity: a, isFeatured: true)),
                 const SizedBox(height: 12),
-              ] else if (controller.tomorrowActivities.isNotEmpty) ...[
-                // Only show "No work today" if there is work tomorrow?
-                // Or just keep it clean.
               ],
 
               // 2. Besok
@@ -141,7 +161,7 @@ class ActivityView extends GetView<ActivityController> {
     );
   }
 
-  Widget _buildGlobalEmptyState() {
+  Widget _buildGlobalEmptyState(bool isEmployer) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -152,17 +172,20 @@ class ActivityView extends GetView<ActivityController> {
               color: Colors.grey.shade100,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.work_off_outlined,
+            child: Icon(
+              isEmployer ? Icons.post_add : Icons.work_off_outlined,
               size: 48,
               color: Colors.grey,
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
-            'Belum ada aktivitas lamaran.',
+          Text(
+            isEmployer
+                ? 'Belum ada lowongan dibuat.'
+                : 'Belum ada aktivitas lamaran.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey, height: 1.5, fontSize: 16),
+            style:
+                const TextStyle(color: Colors.grey, height: 1.5, fontSize: 16),
           ),
           const SizedBox(height: 8),
           TextButton(
@@ -171,7 +194,7 @@ class ActivityView extends GetView<ActivityController> {
                 // For now just refresh
                 controller.fetchActivities();
               },
-              child: const Text('Cari Lowongan'))
+              child: Text(isEmployer ? 'Refresh' : 'Cari Lowongan'))
         ],
       ),
     );
