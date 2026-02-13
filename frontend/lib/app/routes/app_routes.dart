@@ -1,8 +1,9 @@
+// ignore_for_file: constant_identifier_names
+
 // app_routes.dart - Synchronized with /lib/routes.dart
 abstract class Routes {
   Routes._();
   static const SPLASH = '/splash';
-  static const LANDING = '/landing'; // New
   static const LOGIN = '/login';
   static const ROLE_SELECTION = '/role';
   static const MAIN = '/main'; // New BottomNav Wrapper
@@ -17,5 +18,7 @@ abstract class Routes {
   static const JOB_DETAIL = '/orders/detail';
   static const EMPLOYER_ACTIVITY_DETAIL =
       '/orders/employer-detail'; // New Route
+  static const JOB_DEEP_LINK = '/jobs/:id'; // Web Fallback Route
+  static const NOT_FOUND = '/not-found';
   static const PRIVACY_POLICY = '/privacy-policy';
 }

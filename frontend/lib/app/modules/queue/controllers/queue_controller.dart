@@ -13,10 +13,24 @@ class QueueController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    orderId = Get.arguments ?? '';
-    if (orderId.isNotEmpty) {
-      fetchQueue();
+
+    if (Get.arguments is String) {
+      orderId = Get.arguments;
+    } else {
+      print(
+          '[QueueController] Invalid argument type: ${Get.arguments?.runtimeType}');
+      Get.snackbar('Error', 'Data antrian tidak valid');
+      Get.back();
+      return;
     }
+
+    if (orderId.isEmpty) {
+      Get.snackbar('Error', 'ID lowongan tidak ditemukan');
+      Get.back();
+      return;
+    }
+
+    fetchQueue();
   }
 
   Future<void> fetchQueue() async {

@@ -17,4 +17,11 @@ class Env {
   // Required to get idToken for backend verification
   static const String googleWebClientId =
       '1080029274310-6dvi1fj8eqgh6ho39961m4lvbqbugj1o.apps.googleusercontent.com';
+
+  // Verified App Links Domain
+  static const String appLinksDomain = 'kerjocurup-link.vercel.app';
+
+  // Play Store URL for fallbacks
+  static const String playStoreUrl =
+      'https://play.google.com/store/apps/details?id=com.kerjocurup.app'; // Fixed ID
 }

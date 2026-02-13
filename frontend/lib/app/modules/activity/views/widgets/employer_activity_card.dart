@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart'; // Added using share_plus
 import '../../../../../core/theme/app_colors.dart';
 import '../../controllers/activity_controller.dart';
 import '../../../../../models/order_model.dart';
@@ -94,6 +95,8 @@ class EmployerActivityCard extends StatelessWidget {
                           print('Failed to refresh activities: $e');
                         }
                       }
+                    } else if (value == 'share') {
+                      _handleShare(order);
                     } else if (value == 'close') {
                       _handleClose(context);
                     }
@@ -107,6 +110,17 @@ class EmployerActivityCard extends StatelessWidget {
                               size: 20, color: AppColors.textPrimary),
                           SizedBox(width: 12),
                           Text('Edit Lowongan'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'share',
+                      child: Row(
+                        children: [
+                          Icon(Icons.share,
+                              size: 20, color: AppColors.textPrimary),
+                          SizedBox(width: 12),
+                          Text('Bagikan Lowongan'),
                         ],
                       ),
                     ),
@@ -320,5 +334,26 @@ class EmployerActivityCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _handleShare(OrderModel order) async {
+    final String url = 'https://kerjocurup.app/jobs/${order.id}';
+    final String dateStr = order.jobDate != null
+        ? DateFormat('EEEE, d MMM yyyy', 'id_ID').format(order.jobDate!)
+        : 'Jadwal belum diatur';
+
+    final String text = '''
+Halo, ada lowongan kerja tersedia.
+
+Pekerjaan: ${order.title ?? 'Pekerjaan Baru'}
+Lokasi: ${order.location ?? 'Rejang Lebong'}
+Tanggal: $dateStr
+Jumlah Dibutuhkan: ${order.totalWorkers ?? 1} orang
+
+Buka di aplikasi KerjoCurup:
+$url
+''';
+
+    await Share.share(text, subject: 'Lowongan Kerja: ${order.title}');
   }
 }

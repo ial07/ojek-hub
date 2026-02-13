@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:get/get.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../models/order_model.dart';
 import '../../../../routes/app_routes.dart';
+import '../../../../../config/env.dart';
 
 class EmployerJobCard extends StatelessWidget {
   final OrderModel order;
@@ -105,7 +107,7 @@ class EmployerJobCard extends StatelessWidget {
         primaryActionLabel = 'Lihat Pelamar';
         primaryActionIcon = Icons.people_alt_outlined;
         onPrimaryAction =
-            () => Get.toNamed(Routes.QUEUE_VIEW, arguments: order);
+            () => Get.toNamed(Routes.QUEUE_VIEW, arguments: order.id);
       }
       // Else: Fallback to "Lihat Detail" (Share removed)
     }
@@ -291,59 +293,180 @@ class EmployerJobCard extends StatelessWidget {
               // --- Action Divider ---
               const Divider(height: 1, thickness: 0.5),
 
-              // --- Footer Action ---
-              InkWell(
-                onTap: onPrimaryAction, // Use calculated action
-                borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(12),
-                    bottomRight: Radius.circular(12)),
-                child: Padding(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      // Alert Icon if Needs Action
-                      if (needsAction) ...[
-                        Icon(Icons.error_outline,
-                            size: 16, color: Colors.orange.shade800),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Perlu Tindakan',
-                          style: TextStyle(
-                            color: Colors.orange.shade800,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
+              // --- Footer Actions ---
+              // Logic:
+              // - If Shareable (Active + Not Full): Show [ Share | Detail ]
+              // - If Not Shareable: Show [ Detail (Full Width) ]
+
+              Builder(
+                builder: (context) {
+                  // Re-evaluate shareability explicitly for safety
+                  bool isStillOpen = order.status == 'open';
+                  bool isNotFull = accepted < total;
+                  bool isDateValid = true;
+                  if (order.jobDate != null) {
+                    final now = DateTime.now();
+                    final today = DateTime(now.year, now.month, now.day);
+                    final jUtc = order.jobDate!.isUtc
+                        ? order.jobDate!.toLocal()
+                        : order.jobDate!;
+                    final jDay = DateTime(jUtc.year, jUtc.month, jUtc.day);
+                    if (jDay.isBefore(today)) isDateValid = false;
+                  }
+
+                  final bool isShareable =
+                      isStillOpen && isNotFull && isDateValid;
+
+                  if (isShareable) {
+                    return Row(
+                      children: [
+                        // 1. Share Button (Left - Outlined/Ghost)
+                        Expanded(
+                          child: InkWell(
+                            onTap: () => _handleShare(order),
+                            borderRadius: const BorderRadius.only(
+                              bottomLeft: Radius.circular(12),
+                            ),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              decoration: BoxDecoration(
+                                border: Border(
+                                  right: BorderSide(
+                                    color: Colors.grey.shade200,
+                                    width: 1,
+                                  ),
+                                ),
+                              ),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.share_outlined,
+                                      size: 16, color: AppColors.primaryGreen),
+                                  SizedBox(width: 8),
+                                  Text(
+                                    'Bagikan',
+                                    style: TextStyle(
+                                      color: AppColors.primaryGreen,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
-                        const Spacer(), // Push action to right
-                      ],
 
-                      // Primary Action Label
-                      Text(
-                        primaryActionLabel,
-                        style: TextStyle(
-                          color: needsAction
-                              ? AppColors.primaryBlack
-                              : AppColors.primaryGreen,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
+                        // 2. Detail Action (Right - Primary)
+                        Expanded(
+                          child: InkWell(
+                            onTap: onPrimaryAction,
+                            borderRadius: const BorderRadius.only(
+                              bottomRight: Radius.circular(12),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  // Alert Icon if Needs Action
+                                  if (needsAction) ...[
+                                    Icon(Icons.error_outline,
+                                        size: 16,
+                                        color: Colors.orange.shade800),
+                                    const SizedBox(width: 6),
+                                  ],
+                                  Text(
+                                    needsAction
+                                        ? 'Lihat Pelamar'
+                                        : 'Lihat Detail',
+                                    style: TextStyle(
+                                      color: needsAction
+                                          ? Colors.orange.shade800
+                                          : AppColors.primaryBlack,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Icon(
+                                    needsAction
+                                        ? Icons.people_alt_outlined
+                                        : Icons.arrow_forward,
+                                    size: 16,
+                                    color: needsAction
+                                        ? Colors.orange.shade800
+                                        : AppColors.primaryBlack,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  } else {
+                    // Not Shareable - Full Width Button (Detail)
+                    return InkWell(
+                      onTap: onPrimaryAction,
+                      borderRadius: const BorderRadius.only(
+                          bottomLeft: Radius.circular(12),
+                          bottomRight: Radius.circular(12)),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 12, horizontal: 16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              primaryActionLabel,
+                              style: const TextStyle(
+                                color: AppColors.primaryBlack,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 13,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Icon(primaryActionIcon,
+                                size: 16, color: AppColors.primaryBlack),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 6),
-                      Icon(primaryActionIcon,
-                          size: 16,
-                          color: needsAction
-                              ? AppColors.primaryBlack
-                              : AppColors.primaryGreen),
-                    ],
-                  ),
-                ),
+                    );
+                  }
+                },
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _handleShare(OrderModel order) async {
+    // Only use Vercel domain if App Links are fully configured there.
+    // Otherwise, we might want to share the Play Store link directly or a dynamic link.
+    // Requirement says: "Ensure all shared job links use the active and verified App Links domain."
+    // Active domain: kerjocurup-link.vercel.app
+
+    // Using https scheme for App Links
+    final String url = 'https://${Env.appLinksDomain}/jobs/${order.id}';
+    final String dateStr = order.jobDate != null
+        ? DateFormat('EEEE, d MMM yyyy', 'id_ID').format(order.jobDate!)
+        : 'Jadwal belum diatur';
+
+    final String text = '''
+Halo, ada lowongan kerja tersedia.
+
+Pekerjaan: ${order.title ?? 'Pekerjaan Baru'}
+Lokasi: ${order.location ?? 'Rejang Lebong'}
+Tanggal: $dateStr
+Jumlah Dibutuhkan: ${order.totalWorkers ?? 1} orang
+
+Buka di aplikasi KerjoCurup:
+$url
+''';
+
+    await Share.share(text, subject: 'Lowongan Kerja: ${order.title}');
   }
 }

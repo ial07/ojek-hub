@@ -6,6 +6,10 @@ import '../../home_worker/controllers/home_worker_controller.dart';
 import '../../../../models/order_model.dart';
 import '../../../../core/api/api_client.dart'; // Added
 import 'package:url_launcher/url_launcher.dart';
+import 'package:dio/dio.dart'; // Added for DioException handling
+import 'package:share_plus/share_plus.dart';
+import '../../../routes/app_routes.dart';
+import '../../../../modules/auth/auth_controller.dart';
 
 class JobDetailController extends GetxController {
   // Refactor: job is now reactive to support async loading (Deep Link)
@@ -38,24 +42,37 @@ class JobDetailController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    final args = Get.arguments;
 
-    if (args is OrderModel) {
-      job.value = args;
-      isLoadingJob.value = false;
-      _calculateDistance();
-    } else if (args is String) {
-      // Deep Link Case: ID passed
-      fetchJobDetail(args);
-    } else {
-      // Fallback/Error case
-      Get.snackbar('Error', 'Data lowongan tidak valid');
-      isLoadingJob.value = false;
-    }
+    try {
+      // RBAC GUARD: Handled by AuthController before navigation
+      // Deep links are validated in auth_controller.dart:_navigateToJob()
+      // This controller only handles data loading for authorized Workers
 
-    // Try to find HomeWorkerController if it exists
-    if (Get.isRegistered<HomeWorkerController>()) {
-      _homeWorkerController = Get.find<HomeWorkerController>();
+      final args = Get.arguments;
+
+      if (args is OrderModel) {
+        job.value = args;
+        isLoadingJob.value = false;
+        _calculateDistance();
+      } else if (args is String) {
+        // Deep Link Case: ID passed
+        fetchJobDetail(args);
+      } else {
+        // Fallback/Error case
+        print('[JobDetail] Invalid arguments: $args');
+        Get.snackbar('Error', 'Data lowongan tidak valid');
+        isLoadingJob.value = false;
+        // SAFEGUARD: Redirect to Home instead of showing empty screen
+        Get.offAllNamed(Routes.MAIN);
+      }
+
+      // Try to find HomeWorkerController if it exists
+      if (Get.isRegistered<HomeWorkerController>()) {
+        _homeWorkerController = Get.find<HomeWorkerController>();
+      }
+    } catch (e) {
+      print('[JobDetail] onInit Error: $e');
+      isLoadingJob.value = false;
     }
   }
 
@@ -68,6 +85,18 @@ class JobDetailController extends GetxController {
       print('━━━ [JobDetailController] Raw API Response ━━━');
       print('Status Code: ${response.statusCode}');
       print('Response Data: ${response.data}');
+
+      // Handle 404 explicitly
+      if (response.statusCode == 404) {
+        print('[JobDetail] Job not found: $id');
+        Get.snackbar(
+          'Lowongan Tidak Ditemukan',
+          'Lowongan mungkin sudah dihapus atau tidak tersedia.',
+          duration: const Duration(seconds: 4),
+        );
+        Get.offAllNamed(Routes.MAIN);
+        return;
+      }
 
       if (response.statusCode == 200 && response.data['data'] != null) {
         final rawData = response.data['data'];
@@ -90,13 +119,63 @@ class JobDetailController extends GetxController {
         print('Model employerPhotoUrl: ${job.value?.employerPhotoUrl}');
         print('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
+        // PERSISTENCE: Clear pending job ID from storage now that we've found it
+        // This prevents re-opening the same job on next app launch
+        if (Get.isRegistered<AuthController>()) {
+          Get.find<AuthController>().clearPendingJobId();
+        }
+
         _calculateDistance();
       } else {
-        Get.snackbar('Error', 'Lowongan tidak ditemukan');
+        // Malformed response
+        print('[JobDetail] Invalid response structure');
+        Get.snackbar(
+          'Gagal Memuat',
+          'Format data tidak valid. Silakan coba lagi.',
+          duration: const Duration(seconds: 3),
+        );
+        if (Get.isRegistered<AuthController>()) {
+          Get.find<AuthController>().clearPendingJobId();
+        }
+        Get.offAllNamed(Routes.MAIN);
       }
+    } on DioException catch (e) {
+      print('[JobDetail] Network Error: ${e.type}');
+
+      String errorMsg = 'Tidak dapat memuat detail lowongan.';
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout) {
+        errorMsg = 'Koneksi terlalu lambat. Periksa koneksi internet Anda.';
+      } else if (e.type == DioExceptionType.connectionError) {
+        errorMsg = 'Tidak dapat terhubung ke server. Periksa koneksi internet.';
+      } else if (e.response?.statusCode == 404) {
+        errorMsg = 'Lowongan tidak ditemukan atau sudah dihapus.';
+      } else if (e.response?.statusCode == 403) {
+        errorMsg = 'Lowongan ini tidak tersedia untuk Anda.';
+      }
+
+      Get.snackbar(
+        'Gagal Memuat',
+        errorMsg,
+        duration: const Duration(seconds: 4),
+      );
+
+      if (Get.isRegistered<AuthController>()) {
+        Get.find<AuthController>().clearPendingJobId();
+      }
+      Get.offAllNamed(Routes.MAIN);
     } catch (e) {
-      print('Error fetching job detail: $e');
-      Get.snackbar('Error', 'Gagal memuat lowongan');
+      print('[JobDetail] Unexpected Error: $e');
+      Get.snackbar(
+        'Terjadi Kesalahan',
+        'Gagal memuat lowongan. Silakan coba lagi.',
+        duration: const Duration(seconds: 3),
+      );
+
+      if (Get.isRegistered<AuthController>()) {
+        Get.find<AuthController>().clearPendingJobId();
+      }
+      Get.offAllNamed(Routes.MAIN);
     } finally {
       isLoadingJob.value = false;
     }
@@ -242,5 +321,22 @@ class JobDetailController extends GetxController {
       return '62$p';
     }
     return p;
+  }
+
+  Future<void> shareJob() async {
+    final currentJob = job.value;
+    if (currentJob == null) return;
+
+    final String url = 'https://kerjocurup.app/j/${currentJob.id}';
+    final String text = '''
+Lowongan: ${currentJob.title ?? 'Pekerjaan Baru'}
+Lokasi: ${currentJob.location ?? 'Rejang Lebong'}
+
+Lihat detail & lamar di sini:
+$url
+''';
+
+    // Using share_plus
+    await Share.share(text, subject: 'Lowongan Kerja: ${currentJob.title}');
   }
 }

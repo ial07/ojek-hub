@@ -1,7 +1,7 @@
 name: KerjoCurup
 description: Aplikasi penghubung petani dan tenaga kerja di Rejang Lebong.
 publish_to: "none"
-version: 1.4.0+5
+version: 1.5.0+6
 
 environment:
   sdk: ">=3.2.0 <4.0.0"
@@ -25,6 +25,7 @@ dependencies:
   url_launcher: ^6.3.2
   geolocator: ^14.0.2
   app_links: ^6.0.0
+  share_plus: ^12.0.1
 
 dev_dependencies:
   flutter_test:

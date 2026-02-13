@@ -1,3 +1,5 @@
+// ignore_for_file: constant_identifier_names
+
 import 'package:get/get.dart';
 import 'package:KerjoCurup/modules/auth/auth_binding.dart';
 import 'package:KerjoCurup/modules/auth/auth_page.dart';
@@ -7,8 +9,6 @@ import 'package:KerjoCurup/app/modules/home_employer/bindings/home_employer_bind
 import 'package:KerjoCurup/app/modules/home_employer/views/home_employer_view.dart';
 import 'package:KerjoCurup/app/modules/home_worker/bindings/home_worker_binding.dart';
 import 'package:KerjoCurup/app/modules/home_worker/views/home_worker_view.dart';
-import 'package:KerjoCurup/app/modules/landing/bindings/landing_binding.dart';
-import 'package:KerjoCurup/app/modules/landing/views/landing_view.dart';
 import 'package:KerjoCurup/app/modules/main/bindings/main_binding.dart';
 import 'package:KerjoCurup/app/modules/main/views/main_view.dart';
 import 'package:KerjoCurup/app/modules/onboarding/bindings/onboarding_binding.dart';
@@ -36,11 +36,6 @@ class AppPages {
       name: Routes.SPLASH,
       page: () => const SplashView(),
       binding: SplashBinding(),
-    ),
-    GetPage(
-      name: Routes.LANDING,
-      page: () => const LandingView(),
-      binding: LandingBinding(),
     ),
     GetPage(
       name: Routes.LOGIN,

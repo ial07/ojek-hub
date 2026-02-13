@@ -38,6 +38,12 @@ Future<void> main() async {
     // This triggers AFTER OAuth returns via deep link
     Supabase.instance.client.auth.onAuthStateChange.listen((data) {
       print('[MAIN] Auth state changed: ${data.event}');
+
+      if (data.event == AuthChangeEvent.initialSession) {
+        print(
+            '[MAIN] Auth check: Initial session received: ${data.session?.user.email ?? "None"}');
+      }
+
       if (data.event == AuthChangeEvent.signedIn && data.session != null) {
         print('[MAIN] Session detected, calling AuthController...');
         // Get AuthController and process session
@@ -58,7 +64,6 @@ Future<void> main() async {
     runApp(MaterialApp(
       title: 'KerjoCurup',
       theme: AppTheme.lightTheme,
-      initialRoute: Routes.SPLASH,
       home: Scaffold(
         body: Center(
           child: Padding(

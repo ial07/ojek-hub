@@ -24,7 +24,7 @@ class RoleSelectionView extends GetView<OnboardingController> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
-              'Selamat Datang di OjekHub',
+              'Selamat Datang di KerjoCurup',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),

@@ -182,6 +182,7 @@ class ActivityListCard extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(left: 52),
                     child: SizedBox(
+                      width: double.infinity,
                       height: 36,
                       child: OutlinedButton.icon(
                         onPressed: () =>

@@ -8,9 +8,6 @@ class SplashView extends GetView<SplashController> {
 
   @override
   Widget build(BuildContext context) {
-    // Ensure controller is loaded
-    Get.put(SplashController());
-
     return Scaffold(
       backgroundColor: AppColors.primaryWhite,
       body: Center(
@@ -35,7 +32,7 @@ class SplashView extends GetView<SplashController> {
 
             // App Name
             const Text(
-              'OjekHub',
+              'KerjoCurup',
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.bold,

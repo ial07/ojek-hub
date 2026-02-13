@@ -29,32 +29,82 @@ class AuthController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Check session on controller initialization (only once)
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      checkSessionAndRedirect();
-      _initDeepLinks();
-    });
+    // Initialize deep links listener immediately
+    _initDeepLinks();
+
+    // PERSISTENCE: Restore pending job ID if exists (survived app kill)
+    try {
+      final storedJobId = box.read('pending_job_id');
+      if (storedJobId != null && _pendingJobId == null) {
+        _pendingJobId = storedJobId;
+        print('[AUTH] Restored pending_job_id from storage: $_pendingJobId');
+      }
+    } catch (e) {
+      print('[AUTH] Storage Read Error (onInit): $e');
+    }
+  }
+
+  /// Called by SplashController to determine where to go
+  void handleAppLaunch() {
+    print('[AUTH] Handling App Launch...');
+
+    // PERSISTENCE: Double-check storage in case it was set just now
+    try {
+      if (_pendingJobId == null) {
+        final stored = box.read('pending_job_id');
+        if (stored != null) {
+          _pendingJobId = stored;
+          print('[AUTH] handleAppLaunch restored pending_job_id: $stored');
+        }
+      }
+    } catch (e) {
+      print('[AUTH] Storage Read Error (handleAppLaunch): $e');
+    }
+
+    // Check session
+    final session = _supabase.auth.currentSession;
+    if (session != null) {
+      print(
+          '[AUTH] Session found. Processing session for user: ${session.user.email}');
+      _processSession(session);
+    } else {
+      print('[AUTH] No session found. Redirecting to Login.');
+      Get.offAllNamed(Routes.LOGIN);
+    }
+  }
+
+  /// Clear pending job ID from storage and memory
+  /// Called by JobDetailController when job is successfully loaded/viewed
+  void clearPendingJobId() {
+    print('[AUTH] Clearing pending_job_id');
+    _pendingJobId = null;
+    box.remove('pending_job_id');
   }
 
   /// Initialize AppLinks for Deep Linking
   Future<void> _initDeepLinks() async {
     try {
       final appLinks = AppLinks();
+      print('[AUTH] Initializing Deep Links...');
 
       // 1. Cold Start
       final initialUri = await appLinks.getInitialLink();
       if (initialUri != null) {
-        print('[AUTH] Cold start deep link: $initialUri');
+        print('[AUTH] Cold Start URI received: $initialUri');
         _handleDeepLink(initialUri);
+      } else {
+        print('[AUTH] No Cold Start URI');
       }
 
       // 2. Background / Foreground Stream
       appLinks.uriLinkStream.listen((uri) {
-        print('[AUTH] Stream deep link: $uri');
+        print('[AUTH] Stream URI received: $uri');
         _handleDeepLink(uri);
+      }, onError: (err) {
+        print('[AUTH] Deep Link Stream Error: $err');
       });
     } catch (e) {
-      print('[AUTH] Deep Link init error: $e');
+      print('[AUTH] Deep Link Init Error: $e');
     }
   }
 
@@ -62,41 +112,125 @@ class AuthController extends GetxController {
   void _handleDeepLink(Uri uri) {
     // Expected format: https://kerjocurup.app/jobs/{id}
     // OR scheme: kerjocurup://jobs/{id}
-    if (uri.pathSegments.isNotEmpty &&
-        (uri.pathSegments.contains('jobs') ||
-            uri.pathSegments.first == 'jobs')) {
-      // Extract ID (last segment usually)
-      // path: /jobs/123 -> segments: ['jobs', '123']
-      final id = uri.pathSegments.last;
-      if (id.isNotEmpty) {
-        print('[AUTH] Deep Link Job ID identified: $id');
-        _navigateToJob(id);
+    // OR https://kerjocurup-link.vercel.app/jobs/{id}
+    print('[AUTH] _handleDeepLink processing: $uri');
+    print('[AUTH] Path segments: ${uri.pathSegments}');
+
+    // We don't strictly enforce host here because IntentFilter already filters it.
+    // We just care about the path structure: /jobs/{id} or /j/{id}
+
+    if (uri.pathSegments.isNotEmpty) {
+      String? jobId;
+
+      // Logic: Find 'jobs' or 'j' and get the NEXT segment
+      // Example: /jobs/123 -> segments: ['jobs', '123']
+      int index = -1;
+      if (uri.pathSegments.contains('j')) {
+        index = uri.pathSegments.indexOf('j');
+      } else if (uri.pathSegments.contains('jobs')) {
+        index = uri.pathSegments.indexOf('jobs');
       }
+
+      if (index != -1 && index + 1 < uri.pathSegments.length) {
+        jobId = uri.pathSegments[index + 1];
+      }
+
+      if (jobId != null && jobId.isNotEmpty) {
+        print('[AUTH] Parsed Job ID: $jobId');
+
+        // PERSISTENCE: Save Job ID immediately to survive app kill
+        box.write('pending_job_id', jobId);
+        print('[AUTH] Saved pending_job_id to storage: $jobId');
+
+        // Save pending Job ID immediately to memory as well
+        _pendingJobId = jobId;
+
+        // If we are already ready, navigate. If not, wait for handleAppLaunch.
+        if (isReady.value) {
+          _navigateToJob(jobId);
+        } else {
+          print(
+              '[AUTH] Auth not ready yet. Job ID stored pending initialization.');
+        }
+      } else {
+        print('[AUTH] Could not parse Job ID from segments');
+      }
+    } else {
+      print('[AUTH] URI path segments empty');
     }
   }
 
-  void _navigateToJob(String jobId) {
+  Future<void> _navigateToJob(String jobId) async {
+    print('[AUTH] _navigateToJob called for ID: $jobId');
+    print(
+        '[AUTH] State - IsReady: ${isReady.value}, User: ${user.value != null ? "Present" : "Null"}, Role: ${role.value}');
+
+    // 1. Check if user is fully ready (logged in & profile loaded)
     if (isReady.value && user.value != null) {
-      // 1. Role Guard
       final currentRole = userRole;
+      print('[AUTH] User is Ready. Detected Role: $currentRole');
+
+      // 2. Role Guard - Strict Access Control
       if (currentRole == 'worker' || currentRole == 'ojek') {
-        print('[AUTH] Authorized. Navigating to Job $jobId');
-        Get.toNamed(Routes.JOB_DETAIL, arguments: jobId);
+        print('[AUTH] Role ALLOWED. Navigating to JOB_DETAIL.');
+        // Ensure we are not already there to prevent stacking (optional, but good)
+        Get.offAllNamed(Routes.JOB_DETAIL, arguments: jobId);
+      } else if (currentRole == 'farmer' ||
+          currentRole == 'petani' ||
+          currentRole == 'warehouse') {
+        // BLOCK Employer Access + FORCE LOGOUT
+        print('[AUTH] ACCESS DENIED (Employer: $currentRole). Forcing Logout.');
+
+        Get.dialog(
+          AlertDialog(
+            title: const Text('Akses Ditolak'),
+            content: const Text(
+                'Lowongan ini hanya bisa diakses oleh Pekerja.\n\nAkun Anda akan keluar otomatis untuk keamanan.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Get.back(); // close dialog handled by logout flow usually, but safe to close
+                },
+                child: const Text('Mengerti'),
+              ),
+            ],
+          ),
+          barrierDismissible: false,
+        );
+
+        // Delay slightly to let user see the dialog (or just logout immediately)
+        await Future.delayed(const Duration(seconds: 3));
+
+        // Force Logout
+        await logout();
+
+        // Ensure redirect to Login (logout does this, but being explicit)
+        Get.offAllNamed(Routes.LOGIN);
       } else {
-        print('[AUTH] Unauthorized access attempt by $currentRole');
-        Get.snackbar(
-            'Akses Ditolak', 'Hanya Pekerja/Ojek yang bisa melihat lowongan.');
-        _redirectByRole(currentRole);
+        // Unknown role or incomplete profile
+        print('[AUTH] Unknown Role: $currentRole. Redirecting to selection.');
+        Get.offAllNamed(Routes.ROLE_SELECTION);
       }
     } else {
-      // User NOT logged in -> Save for later
-      print('[AUTH] User NOT ready, queuing Job $jobId');
+      // 3. User NOT logged in -> Save for later
+      print('[AUTH] User NOT Ready. Saving Pending Job ID: $jobId');
       _pendingJobId = jobId;
 
-      // If we are already on Login page, maybe show a message?
-      // Or just ensure we redirect after login.
-      if (Get.currentRoute != Routes.LOGIN) {
+      // Force navigation to Login if not already there or loading
+      // If we are in Splash, let Splash finish and checkSessionAndRedirect handle it.
+      // But if we are clearly idle (e.g. no session found yet), ensure Login.
+      if (Get.currentRoute != Routes.LOGIN &&
+          Get.currentRoute != Routes.SPLASH) {
+        print('[AUTH] Not on Login/Splash. Redirecting to Login.');
         Get.toNamed(Routes.LOGIN);
+        Get.snackbar(
+          'Login Diperlukan',
+          'Silakan masuk akun terlebih dahulu untuk melihat detail lowongan.',
+          duration: const Duration(seconds: 3),
+        );
+      } else {
+        print(
+            '[AUTH] Currently on ${Get.currentRoute}. Waiting for session check or user action.');
       }
     }
   }
@@ -195,14 +329,20 @@ class AuthController extends GetxController {
         profile.value = userData;
         isReady.value = true;
 
-        if (_pendingJobId != null) {
-          print('[AUTH] Found pending job redirect: $_pendingJobId');
-          final target = _pendingJobId!;
-          _pendingJobId = null; // Clear
+        // PERSISTENCE: Check for pending job ID (Memory OR Storage)
+        String? targetJobId = _pendingJobId ?? box.read('pending_job_id');
+
+        if (targetJobId != null) {
+          print('[AUTH] Found pending job redirect: $targetJobId');
+
+          // Clear Persistence immediately as we are consuming it now
+          _pendingJobId = null;
+          box.remove('pending_job_id');
 
           // Check Role for Pending Job
           if (role.value == 'worker' || role.value == 'ojek') {
-            Get.offAllNamed(Routes.JOB_DETAIL, arguments: target);
+            print('[AUTH] Navigating to Pending Job: $targetJobId');
+            Get.offAllNamed(Routes.JOB_DETAIL, arguments: targetJobId);
           } else {
             Get.snackbar('Akses Ditolak',
                 'Hanya Pekerja/Ojek yang bisa melihat lowongan.');
@@ -212,7 +352,11 @@ class AuthController extends GetxController {
           _redirectByRole(userData['role']);
         }
       } else {
+        // Unknown status from backend
         Get.snackbar('Error', data['pesan'] ?? 'Login gagal');
+        // Safeguard: Don't stay on Splash
+        await _supabase.auth.signOut();
+        Get.offAllNamed(Routes.LOGIN);
       }
     } catch (e, stack) {
       print('[AUTH] Process session error: $e');
@@ -243,6 +387,12 @@ class AuthController extends GetxController {
         backgroundColor: Colors.red.shade100,
         colorText: Colors.red.shade900,
       );
+
+      // CRITICAL: Ensure we don't get stuck on Splash
+      // If session processing failed, force logout and go to Login
+      print('[AUTH] Critical Session Error. Falling back to Login.');
+      await _supabase.auth.signOut(); // Ensure clean slate
+      Get.offAllNamed(Routes.LOGIN);
     } finally {
       isLoading.value = false;
     }
@@ -289,9 +439,12 @@ class AuthController extends GetxController {
   bool get canApplyToOrder => userRole == 'worker';
 
   void _redirectByRole(String? role) {
+    print('[AUTH] Redirecting by role: $role');
     if (role == 'worker' || role == 'farmer' || role == 'warehouse') {
+      print('[AUTH] Role valid. Going to MAIN.');
       Get.offAllNamed(Routes.MAIN);
     } else {
+      print('[AUTH] Role invalid or unknown. Going to ROLE_SELECTION.');
       Get.offAllNamed(Routes.ROLE_SELECTION);
     }
   }

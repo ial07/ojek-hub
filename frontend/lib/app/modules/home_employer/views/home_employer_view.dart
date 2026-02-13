@@ -64,8 +64,8 @@ class HomeEmployerView extends GetView<HomeEmployerController> {
                   ...controller.activeOrders.map((order) {
                     return EmployerJobCard(
                       order: order,
-                      onTap: () =>
-                          Get.toNamed(Routes.QUEUE_VIEW, arguments: order),
+                      onTap: () => Get.toNamed(Routes.EMPLOYER_ACTIVITY_DETAIL,
+                          arguments: order.id),
                     );
                   }),
                   const SizedBox(height: 24),
@@ -85,8 +85,8 @@ class HomeEmployerView extends GetView<HomeEmployerController> {
                     return EmployerJobCard(
                       order: order,
                       isHistory: true, // Hint to card
-                      onTap: () =>
-                          Get.toNamed(Routes.QUEUE_VIEW, arguments: order),
+                      onTap: () => Get.toNamed(Routes.EMPLOYER_ACTIVITY_DETAIL,
+                          arguments: order.id),
                     );
                   }),
                 ],

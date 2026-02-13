@@ -20,6 +20,12 @@ class JobDetailView extends GetView<JobDetailController> {
         elevation: 0,
         iconTheme: const IconThemeData(color: AppColors.primaryBlack),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share),
+            onPressed: () => controller.shareJob(),
+          ),
+        ],
       ),
       body: Obx(() {
         if (controller.isLoadingJob.value) {
@@ -49,23 +55,7 @@ class JobDetailView extends GetView<JobDetailController> {
         return Column(
           children: [
             // 0. Context Header (Sticky Top)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-              color: const Color(0xFFF5F5F5), // Neutral background
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    '${job.workerType?.toUpperCase() ?? "PEKERJA"}  •  ${job.jobDate != null ? DateFormat('d MMM').format(job.jobDate!) : "N/A"}',
-                    style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary),
-                  ),
-                ],
-              ),
-            ),
+            // 0. Context Header (REMOVED - Moving to body)
 
             Expanded(
               child: SingleChildScrollView(
@@ -73,17 +63,65 @@ class JobDetailView extends GetView<JobDetailController> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // 0. Context Tags (New placement)
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppColors.primaryBlack,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            job.workerType?.toUpperCase() ?? "PEKERJA",
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.calendar_today,
+                                  size: 10, color: AppColors.textSecondary),
+                              const SizedBox(width: 4),
+                              Text(
+                                job.jobDate != null
+                                    ? DateFormat('d MMM yyyy')
+                                        .format(job.jobDate!)
+                                    : "Jadwal N/A",
+                                style: const TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
                     // 1. Provider Identity Section (Hero Card)
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.grey.shade100),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.06),
-                            blurRadius: 16,
-                            offset: const Offset(0, 4),
+                            color: Colors.black.withValues(alpha: 0.03),
+                            blurRadius: 24,
+                            offset: const Offset(0, 8),
                           ),
                         ],
                       ),
@@ -124,9 +162,9 @@ class JobDetailView extends GetView<JobDetailController> {
                                 const SizedBox(height: 4),
                                 if (job.employerPhone != null)
                                   const Text(
-                                    'Terverifikasi', // Placeholder trust signal
+                                    'Terverifikasi',
                                     style: TextStyle(
-                                        color: AppColors.primaryGreen,
+                                        color: Colors.blue,
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold),
                                   ),
@@ -140,11 +178,77 @@ class JobDetailView extends GetView<JobDetailController> {
 
                     const SizedBox(height: 24),
 
-                    // 1.5 Contact Card (New High-Attention Zone)
-                    // TEMPORARY: Contact Card removed for workers
-                    /* 
-                    if (controller.isWorker) ...[...]
-                    */
+                    // 1.5 Contact Card (High-Attention Zone for Workers)
+                    // 1.5 Contact Card (High-Attention Zone for Workers)
+                    if (controller.isWorker && job.employerPhone != null) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 12, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF1F8E9), // Light Green 50
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFDCEDC8)),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: const BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.phone_in_talk_rounded,
+                                  color: AppColors.primaryGreen, size: 20),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Kontak Tersedia',
+                                    style: TextStyle(
+                                      color: AppColors.primaryBlack,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Hubungi via WhatsApp',
+                                    style: TextStyle(
+                                      color: Colors.grey.shade600,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            ElevatedButton(
+                              onPressed: controller.openWhatsApp,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: AppColors.primaryGreen,
+                                elevation: 0,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 8),
+                                shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
+                                    side: BorderSide(
+                                        color: AppColors.primaryGreen
+                                            .withValues(alpha: 0.2))),
+                              ),
+                              child: const Text(
+                                'Chat',
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
                     const SizedBox(height: 24),
 
                     // 2. Job Title & Role Context
@@ -209,14 +313,15 @@ class JobDetailView extends GetView<JobDetailController> {
                             Container(
                               width: 80,
                               decoration: BoxDecoration(
-                                color: Colors.grey.shade300,
+                                color: Colors.blue.withValues(alpha: 0.05),
                                 borderRadius: const BorderRadius.only(
                                   topLeft: Radius.circular(12),
                                   bottomLeft: Radius.circular(12),
                                 ),
                               ),
-                              child: const Center(
-                                  child: Icon(Icons.map, color: Colors.grey)),
+                              child: Center(
+                                  child: Icon(Icons.map_outlined,
+                                      color: Colors.blue.shade300, size: 28)),
                             ),
                             Expanded(
                               child: Padding(
@@ -229,16 +334,15 @@ class JobDetailView extends GetView<JobDetailController> {
                                     Text(
                                       job.location ?? 'Lokasi tidak tersedia',
                                       style: const TextStyle(
-                                          fontWeight: FontWeight.w600,
+                                          fontWeight: FontWeight.bold,
                                           fontSize: 14),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                     const SizedBox(height: 4),
-                                    const Text('Ketuk untuk lihat di peta',
+                                    const Text('Lihat di Peta',
                                         style: TextStyle(
-                                            fontSize: 12,
-                                            color: AppColors.primaryGreen)),
+                                            fontSize: 12, color: Colors.blue)),
                                   ],
                                 ),
                               ),
@@ -276,8 +380,8 @@ class JobDetailView extends GetView<JobDetailController> {
                 color: Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
+                    color: Colors.black.withValues(alpha: 0.03),
+                    blurRadius: 20,
                     offset: const Offset(0, -4),
                   )
                 ],
@@ -286,13 +390,29 @@ class JobDetailView extends GetView<JobDetailController> {
                 child: Column(
                   children: [
                     // Sticky Chat Action (Stacked Top)
-                    // Visible for Workers if Phone exists, unless Status is 'accepted' (covered by primary button)
-                    // TEMPORARY: Sticky Chat Action removed
-                    /*
+                    // Visible for Workers if Phone exists, unless Status is 'accepted'
                     if (controller.isWorker &&
                         job.employerPhone != null &&
-                        status != 'accepted') ...[...]
-                    */
+                        status != 'accepted') ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: controller.openWhatsApp,
+                          icon: const Icon(Icons.chat_bubble_outline, size: 18),
+                          label: const Text('Hubungi via WhatsApp'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primaryGreen,
+                            side:
+                                const BorderSide(color: AppColors.primaryGreen),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
 
                     // Primary State Actions (Stacked Bottom)
                     if (status == 'accepted' && job.employerPhone != null)

@@ -16,30 +16,29 @@ class EmployerActivityDetailController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    // Expect order ID or Order Object passed as arguments
+    // Expect String orderId or Map with 'id' key
     if (Get.arguments != null) {
-      if (Get.arguments is Map) {
-        // If passed as Map (sometimes happens with JSON)
+      if (Get.arguments is String) {
+        orderId = Get.arguments;
+      } else if (Get.arguments is Map && Get.arguments['id'] != null) {
         orderId = Get.arguments['id'];
-        orderData.value = Get.arguments;
       } else {
-        // If passed as Object (OrderModel)
-        // We might need to handle OrderModel, but let's assume loose coupling or dynamic for now
-        // Or better, cast it properly if we import OrderModel.
-        try {
-          orderId = Get.arguments.id;
-          // We can't easily convert OrderModel to Map without toJson, assuming it has it or we just use ID.
-          // Let's safe fetch by ID.
-        } catch (e) {
-          print('Error parsing arguments: $e');
-        }
+        print(
+            '[EmployerActivityDetail] Invalid argument type: ${Get.arguments.runtimeType}');
+        Get.snackbar('Error', 'Data lowongan tidak valid');
+        Get.back();
+        return;
       }
     }
 
-    if (orderId.isNotEmpty) {
-      fetchApplicants();
-      _fetchOrderDetails();
+    if (orderId.isEmpty) {
+      Get.snackbar('Error', 'ID lowongan tidak ditemukan');
+      Get.back();
+      return;
     }
+
+    fetchApplicants();
+    _fetchOrderDetails();
   }
 
   Future<void> _fetchOrderDetails() async {
